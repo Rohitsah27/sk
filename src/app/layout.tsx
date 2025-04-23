@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import ClientBody from "./ClientBody";
+import CookieConsent from '@/components/Cookies/CookieConsent';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ClientBody>{children}</ClientBody>
+        <CookieConsent />
       </body>
     </html>
   );

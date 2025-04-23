@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { PhoneCall, Mail, ChevronDown, Search, User, ShoppingCart, X } from 'lucide-react'
+import { PhoneCall, Mail, ChevronDown, Search, User, ShoppingCart, X, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { products } from '@/data/products'
@@ -27,19 +27,34 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<Product[]>([])
   const [showResults, setShowResults] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const categoryRef = useRef<HTMLDivElement>(null)
+
+  // Get unique categories from products
+  const categories = Array.from(new Set(products.map(product => product.category)))
+    .map(category => ({
+      name: category,
+      slug: category.toLowerCase().replace(/\s+/g, '-')
+    }));
+
+  // Add "All Products" option at the beginning of categories
+  const allCategories = [
+    { name: 'All Products', slug: 'all' },
+    ...categories
+  ];
 
   // Handle search input changes
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
     setSearchQuery(query)
-    
+
     if (query.length > 0) {
       const results = products.filter(product =>
         product.title.toLowerCase().includes(query.toLowerCase()) ||
         product.category.toLowerCase().includes(query.toLowerCase())
       )
-      setSearchResults(results.slice(0, 5)) // Show top 5 results
+      setSearchResults(results.slice(0, 5))
       setShowResults(true)
     } else {
       setSearchResults([])
@@ -58,14 +73,17 @@ export default function Header() {
     }
   }
 
-  // Close search results when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowResults(false)
       }
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setIsCategoryOpen(false)
+      }
     }
-    
+
     document.addEventListener('click', handleClickOutside)
     return () => {
       document.removeEventListener('click', handleClickOutside)
@@ -79,34 +97,59 @@ export default function Header() {
     setShowResults(false)
   }
 
+  // Handle category selection
+  const handleCategoryClick = (slug: string) => {
+    setIsCategoryOpen(false);
+    if (slug === 'all') {
+      router.push('/products'); // Route to show all products
+    } else {
+      router.push(`/category/${slug}`);
+    }
+  };
+
+  // In your Header component's categories dropdown
+  {
+    categories.map((category) => (
+      <li key={category.slug}>
+        <Link
+          href={category.slug === 'all' ? '/products' : `/category/${category.slug}`}
+          className="flex items-center justify-between px-4 py-2 hover:bg-gray-100"
+          onClick={() => setIsCategoryOpen(false)}
+        >
+          <span>{category.name}</span>
+        </Link>
+      </li>
+    ))
+  }
+
   return (
     <header className="w-full">
       {/* Top Navigation */}
       <div className="bg-[hsl(var(--bonik-blue))] text-white py-2">
-  <div className="container-custom flex justify-between items-center">
-    <div className="flex items-center gap-6">
-      <div className="flex items-center gap-2">
-        <PhoneCall size={16} />
-        <span className=""> ‪+919818900247‬ </span>
-        <span className="hidden sm:inline">, ‪+919818900247‬</span>
+        <div className="container-custom flex justify-between items-center">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <PhoneCall size={16} />
+              <span className=""> ‪+919818900247‬ </span>
+              <span className="hidden sm:inline">, ‪+919818900247‬</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <Mail size={16} />
+              <span>info@skequipments.com</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/help" className="hover:underline hidden sm:inline">Need Help?</Link>
+            <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1">
+                <img src="https://ext.same-assets.com/4117257200/1555852028.png" alt="USA" className="w-4 h-4" />
+                <span>EN</span>
+              </span>
+              <ChevronDown size={16} />
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="hidden sm:flex items-center gap-2">
-        <Mail size={16} />
-        <span>info@skequipments.com</span>
-      </div>
-    </div>
-    <div className="flex items-center gap-4">
-      <Link href="/help" className="hover:underline hidden sm:inline">Need Help?</Link>
-      <div className="flex items-center gap-1">
-        <span className="flex items-center gap-1">
-          <img src="https://ext.same-assets.com/4117257200/1555852028.png" alt="USA" className="w-4 h-4" />
-          <span>EN</span>
-        </span>
-        <ChevronDown size={16} />
-      </div>
-    </div>
-  </div>
-</div>
 
       {/* Main Navigation */}
       <div className="py-4 border-b">
@@ -120,8 +163,8 @@ export default function Header() {
 
           {/* Mobile Search Button - Only visible on mobile */}
           <div className="md:hidden">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={toggleMobileSearch}
               className="text-gray-600"
@@ -131,7 +174,7 @@ export default function Header() {
           </div>
 
           {/* Search - Hidden on mobile unless activated */}
-          <div 
+          <div
             ref={searchRef}
             className={`${showMobileSearch ? 'flex' : 'hidden'} md:flex flex-1 max-w-xl px-6 relative`}
           >
@@ -150,12 +193,12 @@ export default function Header() {
                   }
                 }}
               />
-              
+
               {/* Search button with icon and text - Hidden on mobile */}
-              <Button 
+              <Button
                 type="submit"
                 className="absolute right-0 h-full px-4 rounded-r-[20px] bg-[hsl(var(--bonik-blue))] hover:bg-[hsl(var(--bonik-blue)/0.9)] text-white hidden md:flex items-center gap-5"
-                style={{ borderRadius: '0px 20px 20px 0px'}}
+                style={{ borderRadius: '0px 20px 20px 0px' }}
               >
                 <Search size={18} />
                 <span>Search</span>
@@ -164,15 +207,15 @@ export default function Header() {
 
             {/* Search results dropdown */}
             {showResults && searchResults.length > 0 && (
-              <div 
-                className="absolute z-50 w-full  bg-white border border-gray-200 rounded-md shadow-lg"
+              <div
+                className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg"
                 onClick={(e) => e.stopPropagation()}
                 style={{ marginTop: '40px' }}
               >
                 <ul className="py-1">
                   {searchResults.map((product) => (
                     <li key={product.id}>
-                      <Link 
+                      <Link
                         href={`/product/${product.slug}`}
                         className="flex items-center px-4 py-2 hover:bg-gray-100"
                         onClick={() => {
@@ -204,19 +247,53 @@ export default function Header() {
       </div>
 
       {/* Category Navigation */}
-      <div className=" bg-red-600 text-white shadow-md shadow-black/30 z-10">
+      <div className="bg-red-600 text-white shadow-md shadow-black/30 z-10">
         <div className="container-custom flex items-center justify-between">
-          <nav className="flex-1">
+          {/* Categories Dropdown */}
+          <div
+            ref={categoryRef}
+            className="relative group"
+            onMouseEnter={() => setIsCategoryOpen(true)}
+            onMouseLeave={() => setIsCategoryOpen(false)}
+          >
+            <button
+              className="flex items-center gap-2 px-6 py-3 bg-red-700 hover:bg-red-800 transition-colors h-full"
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+            >
+              <span>All Categories</span>
+              <ChevronDown size={16} />
+            </button>
+
+            {/* Categories Dropdown Menu */}
+            {isCategoryOpen && (
+              <div className="absolute left-0 w-56 bg-white text-gray-800 shadow-lg z-50 rounded-b-md">
+                <ul className="py-1">
+                  {allCategories.map((category) => (
+                    <li key={category.slug}>
+                      <button
+                        onClick={() => handleCategoryClick(category.slug)}
+                        className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 text-left"
+                      >
+                        <span>{category.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <nav className="flex-1 ms-5">
             <ul className="flex items-center gap-8 py-3">
-              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
+              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105 sm:f-2">
                 <Link href="/">Home</Link>
               </li>
-              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
+              {/* <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
                 <Link href="/pages">Pages</Link>
               </li>
               <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
-                <Link href="/vendor">Shop Page</Link>
-              </li>
+                <Link href="/products">Shop Page</Link> 
+              </li> */}
               <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
                 <Link href="/track">About Us</Link>
               </li>

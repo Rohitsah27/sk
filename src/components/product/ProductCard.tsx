@@ -73,7 +73,7 @@ export default function ProductCard({
           <span className="text-sm text-gray-500 ml-1">({reviews})</span>
         </div>
         <div className="mt-auto">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <span className="font-medium text-lg text-gray-900">
               ₹{price}
             </span>
@@ -82,7 +82,7 @@ export default function ProductCard({
                 ₹{originalPrice}
               </span>
             )}
-          </div>
+          </div> */}
           {/* <Button 
             variant="outline" 
             className="w-full mt-3 border-[hsl(var(--bonik-blue))] text-[hsl(var(--bonik-blue))] hover:bg-[hsl(var(--bonik-blue))] hover:text-white"

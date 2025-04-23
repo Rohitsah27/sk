@@ -58,12 +58,12 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <span className="text-sm text-gray-500">({product.reviews} Reviews)</span>
               </div>
 
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <span className="text-2xl font-bold text-gray-900 mr-3">₹{product.price}</span>
                 {product.originalPrice && (
                   <span className="text-lg text-gray-500 line-through">₹{product.originalPrice}</span>
                 )}
-              </div>
+              </div> */}
 
               {product.description && (
                 <p className="text-gray-600 mb-6">

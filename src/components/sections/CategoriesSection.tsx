@@ -38,7 +38,7 @@ export default function CategoriesSection() {
       id: 1,
       title: "Fabrics Testing",
       image: "https://5.imimg.com/data5/SELLER/Default/2024/4/409839437/VY/RN/DU/2556085/rubbing-fastness-tester-500x500.jpg",
-      href: "/category/mens-fashion"
+      href: "/category/testing-equipment"
     },
     {
       id: 2,

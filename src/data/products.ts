@@ -98,6 +98,7 @@ export interface Product {
           'Power: 220V, 50Hz'
         ]
       }
+        
     // Add more products as needed
   ];
   

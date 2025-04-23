@@ -1,12 +1,13 @@
-import Layout from '@/components/layout/Layout'
-import HeroSection from '@/components/sections/HeroSection'
-import FeaturesSection from '@/components/sections/FeaturesSection'
-import CategoriesSection from '@/components/sections/CategoriesSection'
-import ProductsSection from '@/components/sections/ProductsSection'
-import PromoBannersSection from '@/components/sections/PromoBannersSection'
-import BigSaleBanner from '@/components/sections/BigSaleBanner'
+import Layout from '@/components/layout/Layout';
+import HeroSection from '@/components/sections/HeroSection';
+import FeaturesSection from '@/components/sections/FeaturesSection';
+import CategoriesSection from '@/components/sections/CategoriesSection';
+import ProductsSection from '@/components/sections/ProductsSection';
+import PromoBannersSection from '@/components/sections/PromoBannersSection';
+import BigSaleBanner from '@/components/sections/BigSaleBanner';
+import FloatingChat from '@/components/FloatingChat'; // Corrected import path
 
-export default function Home() {
+export default function Home() { // Removed (Component, pageProps) as they're not needed for homepage
   return (
     <Layout>
       <HeroSection />
@@ -16,6 +17,7 @@ export default function Home() {
       <PromoBannersSection />
       <ProductsSection title="Featured Products" />
       <BigSaleBanner />
+      <FloatingChat />
     </Layout>
-  )
+  );
 }
