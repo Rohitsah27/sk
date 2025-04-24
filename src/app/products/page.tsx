@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { products } from '@/data/products';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { useParams } from 'next/navigation';
 
 interface Product {
   id: number;
@@ -20,40 +19,47 @@ interface Product {
   slug: string;
 }
 
-export default function CategoryPage() {
-  const params = useParams();
-  const categorySlug = params.slug as string;
-  
-  // Convert slug back to category name
-  const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  
+export default function ProductsPage() {
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 240000]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Get products for this category
-  const categoryProducts = products.filter(product => 
-    product.category.toLowerCase() === categoryName.toLowerCase()
-  );
+  // Extract all unique categories from products
+  const allCategories = Array.from(new Set(products.map(product => product.category)));
 
   // Filter products based on all criteria
-  const filteredProducts = categoryProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     // Convert price string to number (remove commas and parse)
     const price = parseFloat(product.price.replace(/,/g, ''));
     
     // Check price range
     const priceMatch = price >= priceRange[0] && price <= priceRange[1];
     
+    // Check category filter
+    const categoryMatch = selectedCategories.length === 0 || 
+                         selectedCategories.includes(product.category);
+    
     // Check rating filter
     const ratingMatch = product.rating >= minRating;
     
     // Check search query
     const searchMatch = searchQuery === '' || 
-                       product.title.toLowerCase().includes(searchQuery.toLowerCase());
+                       product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                       product.category.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return priceMatch && ratingMatch && searchMatch;
+    return priceMatch && categoryMatch && ratingMatch && searchMatch;
   });
+
+  // Handle category selection
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category) 
+        : [...prev, category]
+    );
+  };
 
   // Handle price range change
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -62,9 +68,6 @@ export default function CategoryPage() {
       index === 0 ? [newValue, prev[1]] : [prev[0], newValue]
     );
   };
-
-  // Extract all unique categories from products
-  const allCategories = Array.from(new Set(products.map(product => product.category)));
 
   return (
     <>
@@ -87,18 +90,21 @@ export default function CategoryPage() {
                 />
               </div>
 
-              {/* Categories Filter - Show all categories as links */}
+              {/* Categories Filter */}
               <div className="bg-white p-4 rounded-lg shadow">
                 <h2 className="text-lg font-semibold mb-4">Categories</h2>
                 <ul className="space-y-2">
                   {allCategories.map(category => (
                     <li key={category}>
-                      <Link 
-                        href={`/category/${category.toLowerCase().replace(/\s+/g, '-')}`}
-                        className={`block p-2 rounded ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-blue-100 font-medium' : 'hover:bg-gray-100'}`}
-                      >
-                        {category}
-                      </Link>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category)}
+                          onChange={() => toggleCategory(category)}
+                          className="rounded text-blue-500"
+                        />
+                        <span>{category}</span>
+                      </label>
                     </li>
                   ))}
                 </ul>
@@ -167,9 +173,7 @@ export default function CategoryPage() {
             {/* Main Content */}
             <div className="w-full md:w-3/4">
               <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">
-                  {categoryName} Products
-                </h1>
+                <h1 className="text-2xl font-bold">All Products</h1>
                 <p className="text-gray-600">{filteredProducts.length} products found</p>
               </div>
 
@@ -226,10 +230,11 @@ export default function CategoryPage() {
                 </div>
               ) : (
                 <div className="bg-white rounded-lg shadow p-8 text-center">
-                  <h3 className="text-lg font-medium mb-2">No products found in this category</h3>
+                  <h3 className="text-lg font-medium mb-2">No products found</h3>
                   <p className="text-gray-600 mb-4">Try adjusting your filters to see more results.</p>
                   <button 
                     onClick={() => {
+                      setSelectedCategories([]);
                       setPriceRange([0, 240000]);
                       setMinRating(0);
                       setSearchQuery('');

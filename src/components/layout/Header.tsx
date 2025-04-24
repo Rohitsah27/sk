@@ -101,26 +101,11 @@ export default function Header() {
   const handleCategoryClick = (slug: string) => {
     setIsCategoryOpen(false);
     if (slug === 'all') {
-      router.push('/products'); // Route to show all products
+      router.push('/products'); // Navigate to the products page showing all products
     } else {
-      router.push(`/category/${slug}`);
+      router.push(`/category/${slug}`); // Navigate to the specific category page
     }
   };
-
-  // In your Header component's categories dropdown
-  {
-    categories.map((category) => (
-      <li key={category.slug}>
-        <Link
-          href={category.slug === 'all' ? '/products' : `/category/${category.slug}`}
-          className="flex items-center justify-between px-4 py-2 hover:bg-gray-100"
-          onClick={() => setIsCategoryOpen(false)}
-        >
-          <span>{category.name}</span>
-        </Link>
-      </li>
-    ))
-  }
 
   return (
     <header className="w-full">
@@ -247,7 +232,7 @@ export default function Header() {
       </div>
 
       {/* Category Navigation */}
-      <div className="bg-red-600 text-white shadow-md shadow-black/30 z-10">
+      <div className="hidden md:block bg-red-600 text-white shadow-md shadow-black/30 z-10">
         <div className="container-custom flex items-center justify-between">
           {/* Categories Dropdown */}
           <div
@@ -275,6 +260,7 @@ export default function Header() {
                         className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 text-left"
                       >
                         <span>{category.name}</span>
+                        {category.slug !== 'all' && <ChevronRight size={16} className="text-gray-400" />}
                       </button>
                     </li>
                   ))}
@@ -288,22 +274,19 @@ export default function Header() {
               <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105 sm:f-2">
                 <Link href="/">Home</Link>
               </li>
-              {/* <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
-                <Link href="/pages">Pages</Link>
+              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
+                <Link href="/products">All Products</Link>
+              </li>
+              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105 ">
+                <Link href="/about-us">About Us</Link>
               </li>
               <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
-                <Link href="/products">Shop Page</Link> 
-              </li> */}
-              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
-                <Link href="/track">About Us</Link>
-              </li>
-              <li className="bonik-nav-link text-white hover:text-white transition-transform duration-100 hover:scale-105">
-                <Link href="/demos">Contact Us</Link>
+                <Link href="/contact-us">Contact Us</Link>
               </li>
             </ul>
           </nav>
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -3,6 +3,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import ClientBody from "./ClientBody";
 import CookieConsent from '@/components/Cookies/CookieConsent';
+import BottomNav from "@/components/phone/BottomNav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ClientBody>{children}</ClientBody>
         <CookieConsent />
+        <BottomNav />
       </body>
     </html>
   );
