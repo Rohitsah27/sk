@@ -11,7 +11,7 @@ export default function PromoBannersSection() {
     <section className="py-10">
       <div className="container-custom-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Men's Banner */}
+          
           <div className="relative rounded-lg overflow-hidden h-[300px]">
             <Image
               src={Card1}
@@ -23,12 +23,12 @@ export default function PromoBannersSection() {
               <h3 className="text-white text-2xl font-bold mb-1">Testing Equipment <br /> That Delivers</h3>
               {/* <p className="text-white/90 mb-4">Starting At $29</p> */}
               <Button asChild className="bg-white text-black hover:bg-white/90 w-32">
-                <Link href="/category/mens-fashion">SHOP NOW</Link>
+                <Link href="/products">SHOP NOW</Link>
               </Button>
             </div>
           </div>
 
-          {/* Black Friday Banner */}
+         
           <div className="relative rounded-lg overflow-hidden h-[300px]">
             <Image
               src={Card2}
@@ -43,12 +43,12 @@ export default function PromoBannersSection() {
                 <Link href="/sale">Shop Now</Link>
               </Button> */}
               <Button asChild className="bg-white text-black hover:bg-white/90 w-32">
-                <Link href="/category/womens-fashion">Know More</Link>
+                <Link href="/about-us">Know More</Link>
               </Button>
             </div>
           </div>
 
-          {/* Women's Banner */}
+         
           <div className="relative rounded-lg overflow-hidden h-[300px]">
             <Image
               src={Card3}
@@ -60,7 +60,7 @@ export default function PromoBannersSection() {
               <h3 className="text-white text-2xl font-bold mb-1">From Lab to Line</h3>
               <p className="text-white/90 mb-4">Affordable, Reliable, Tested.</p>
               <Button asChild className="bg-white text-black hover:bg-white/90 w-32">
-                <Link href="/category/womens-fashion">SHOP NOW</Link>
+                <Link href="/products">SHOP NOW</Link>
               </Button>
             </div>
           </div>

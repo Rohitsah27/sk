@@ -124,7 +124,7 @@ export default function Header() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/help" className="hover:underline hidden sm:inline">Need Help?</Link>
+            <Link href="/contact-us" className="hover:underline hidden sm:inline">Need Help?</Link>
             <div className="flex items-center gap-1">
               <span className="flex items-center gap-1">
                 <img src="https://ext.same-assets.com/4117257200/1555852028.png" alt="USA" className="w-4 h-4" />

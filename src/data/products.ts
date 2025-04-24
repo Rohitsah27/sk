@@ -71,7 +71,7 @@ export interface Product {
       price: '85,000.00',
       rating: 3,
       reviews: 4,
-      category: "HELMET TESTING EQUIPMENTS",
+      category: "Helmet Testing Equipments",
       slug: 'safety-helmet-testing-equipments-machine',
       description: 'Complete testing system for evaluating the impact resistance and penetration resistance of safety helmets.',
       specifications: [

@@ -12,7 +12,7 @@ export default function FloatingChat() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Inquiry form state
   const [formData, setFormData] = useState({
     name: '',
@@ -26,7 +26,7 @@ export default function FloatingChat() {
   // Sample bot responses
   const getBotResponse = (userInput) => {
     const inputLower = userInput.toLowerCase();
-    
+
     if (inputLower.includes('leather')) {
       return "We offer various leather testing equipment including tensile testers, abrasion testers, and flexometers. Would you like specifications for any particular machine?";
     }
@@ -43,7 +43,7 @@ export default function FloatingChat() {
       setActiveTab('inquiry');
       return "I've opened the inquiry form for you. Please fill in your details and our team will contact you shortly.";
     }
-    
+
     return "Thank you for your inquiry. For detailed information about our testing equipment, please specify the product type or you can submit an inquiry form.";
   };
 
@@ -52,7 +52,7 @@ export default function FloatingChat() {
       setMessages(prev => [...prev, { text: input, sender: 'user' }]);
       setInput('');
       setIsLoading(true);
-      
+
       setTimeout(() => {
         const response = getBotResponse(input);
         setMessages(prev => [...prev, { text: response, sender: 'bot' }]);
@@ -72,7 +72,7 @@ export default function FloatingChat() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       // Validate required fields
       if (!formData.name || !formData.email || !formData.phone || !formData.message) {
@@ -103,7 +103,7 @@ export default function FloatingChat() {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok || !result.success) {
         throw new Error(result.message || 'Form submission failed');
       }
@@ -114,7 +114,7 @@ export default function FloatingChat() {
         { text: "I've submitted an inquiry form", sender: 'user' },
         { text: "Thank you for your inquiry! Our sales team will contact you shortly.", sender: 'bot' }
       ]);
-      
+
       // Reset form after 3 seconds
       setTimeout(() => {
         setFormData({
@@ -130,15 +130,15 @@ export default function FloatingChat() {
 
     } catch (error) {
       console.error('Form submission error:', error);
-      
+
       let userMessage = "There was an error submitting your inquiry. Please try again later.";
-      
+
       if (error.message.includes('required fields')) {
         userMessage = error.message;
       } else if (error.message.includes('valid email')) {
         userMessage = error.message;
       }
-      
+
       setMessages(prev => [
         ...prev,
         { text: userMessage, sender: 'bot' }
@@ -155,13 +155,13 @@ export default function FloatingChat() {
         <div className="chat-window">
           <div className="chat-header">
             <div className="tabs">
-              <button 
+              <button
                 className={activeTab === 'chat' ? 'active' : ''}
                 onClick={() => setActiveTab('chat')}
               >
                 Live Chat
               </button>
-              <button 
+              <button
                 className={activeTab === 'inquiry' ? 'active' : ''}
                 onClick={() => setActiveTab('inquiry')}
               >
@@ -170,7 +170,7 @@ export default function FloatingChat() {
             </div>
             <button onClick={() => setIsOpen(false)} className="close-btn">×</button>
           </div>
-          
+
           {activeTab === 'chat' ? (
             <>
               <div className="chat-messages">
@@ -268,11 +268,11 @@ export default function FloatingChat() {
         </div>
       ) : (
         <button className="chat-toggle" onClick={() => setIsOpen(true)}>
-          <Image 
+          <Image
             src={ChatImg}
-            alt="Chat" 
-            width={24} 
-            height={24} 
+            alt="Chat"
+            width={24}
+            height={24}
           />
           <span className="hidden md:block">Equipment Help</span>
         </button>
@@ -296,13 +296,21 @@ export default function FloatingChat() {
         }
 
         @media (max-width: 767px) {
-   .chat-toggle {
-    position: fixed !important;
-    bottom: 78px !important;
-    right: 5px !important;
-    padding: 13px 15px !important;
-  }
-}
+        .chat-toggle {
+        position: fixed !important;
+        bottom: 78px !important;
+        right: 5px !important;
+        padding: 13px 15px !important;
+          }
+        }
+
+        @media (max-width: 767px) {
+        .chat-window  {
+        position: fixed !important;
+        bottom: 9px !important;
+        right: 3px !important;
+          }
+        }
 
         .chat-header {
           background: #2c3e50;

@@ -44,25 +44,25 @@ export default function CategoriesSection() {
       id: 2,
       title: "Testing Equipment",
       image: "https://5.imimg.com/data5/SELLER/Default/2021/10/KY/UZ/NU/2556085/toy-flammability-tester-500x500.jpg",
-      href: "/category/womens-fashion"
+      href: "/category/testing-equipment"
     },
     {
       id: 3,
       title: "Textile Testing Equipments",
       image: "https://5.imimg.com/data5/SELLER/Default/2024/11/463278774/QE/CV/PH/2556085/martindale-abrasion-tester-500x500.jpeg",
-      href: "/category/gadgets"
+      href: "/category/testing-equipment"
     },
     {
       id: 4,
       title: "Cosmetic Testing Equipment",
       image: "https://5.imimg.com/data5/SELLER/Default/2023/11/362756854/PX/CJ/NC/2556085/box-compression-tester-500x500.jpg",
-      href: "/category/cosmetics"
+      href: "/category/testing-equipment"
     },
     {
       id: 5,
       title: "Paper Testing Equipment",
       image: "https://3.imimg.com/data3/AD/MW/MY-2556085/cobb-sizing-tester-250x250.jpg",
-      href: "/category/mens-fashion"
+      href: "/category/testing-equipment"
     }
   ]
 
