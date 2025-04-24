@@ -111,7 +111,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Price Range Filter */}
-              <div className="bg-white p-4 rounded-lg shadow">
+              {/* <div className="bg-white p-4 rounded-lg shadow">
                 <h2 className="text-lg font-semibold mb-4">Price Range</h2>
                 <div className="space-y-4">
                   <div>
@@ -139,7 +139,7 @@ export default function ProductsPage() {
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Ratings Filter */}
               <div className="bg-white p-4 rounded-lg shadow">
@@ -185,12 +185,12 @@ export default function ProductsPage() {
                 <button className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300">
                   Newest
                 </button>
-                <button className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300">
+                {/* <button className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300">
                   Price: Low to High
                 </button>
                 <button className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300">
                   Price: High to Low
-                </button>
+                </button> */}
               </div>
 
               {/* Product Grid */}
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                             ))}
                             <span className="text-gray-600 text-sm ml-1">({product.reviews})</span>
                           </div>
-                          <p className="text-lg font-bold text-gray-800">₹{product.price}</p>
+                          {/* <p className="text-lg font-bold text-gray-800">₹{product.price}</p> */}
                         </div>
                       </Link>
                     </div>

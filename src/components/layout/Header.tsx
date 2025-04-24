@@ -220,7 +220,7 @@ export default function Header() {
                           <p className="text-sm font-medium text-gray-800">{product.title}</p>
                           <p className="text-xs text-gray-500">{product.category}</p>
                         </div>
-                        <span className="ml-auto font-medium">₹{product.price}</span>
+                        {/* <span className="ml-auto font-medium">₹{product.price}</span> */}
                       </Link>
                     </li>
                   ))}
