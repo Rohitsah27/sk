@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { products } from '@/data/products';
+import { fetchProducts } from '@/data/products';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
@@ -22,7 +22,7 @@ interface Product {
 
 export default function CategoryPage() {
   const params = useParams();
-  const categorySlug = params.slug as string;
+  const categorySlug = params?.slug as string || '';
   
   // Convert slug back to category name
   const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -33,6 +33,17 @@ export default function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Get products for this category
+  const [products, setProducts] = useState<Product[]>([]);
+  
+    useEffect(() => {
+      const loadProducts = async () => {
+        const data = await fetchProducts();
+        setProducts(data);
+      };
+  
+      loadProducts();
+    }, []);
+  
   const categoryProducts = products.filter(product => 
     product.category.toLowerCase() === categoryName.toLowerCase()
   );
@@ -91,8 +102,8 @@ export default function CategoryPage() {
               <div className="bg-white p-4 rounded-lg shadow">
                 <h2 className="text-lg font-semibold mb-4">Categories</h2>
                 <ul className="space-y-2">
-                  {allCategories.map(category => (
-                    <li key={category}>
+                  {allCategories.map((category, catIdx) => (
+                    <li key={catIdx}>
                       <Link 
                         href={`/category/${category.toLowerCase().replace(/\s+/g, '-')}`}
                         className={`block p-2 rounded ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-blue-100 font-medium' : 'hover:bg-gray-100'}`}
@@ -193,7 +204,7 @@ export default function CategoryPage() {
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
-                    <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
                       <Link href={`/product/${product.slug}`}>
                         <div className="relative aspect-square">
                           <Image

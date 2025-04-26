@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation'
 import { PhoneCall, Mail, ChevronDown, Search, User, ShoppingCart, X, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { products } from '@/data/products'
+// import { products } from '@/data/products'
+import {fetchProducts } from "@/data/products";
 
 interface Product {
   id: number;
@@ -31,8 +32,19 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null)
   const categoryRef = useRef<HTMLDivElement>(null)
 
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await fetchProducts();
+      setProducts(data);
+    };
+
+    loadProducts();
+  }, []);
+
   // Get unique categories from products
-  const categories = Array.from(new Set(products.map(product => product.category)))
+  const categories = products.map(product => product.category)
     .map(category => ({
       name: category,
       slug: category.toLowerCase().replace(/\s+/g, '-')

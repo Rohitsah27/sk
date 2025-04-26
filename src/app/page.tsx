@@ -6,6 +6,7 @@ import ProductsSection from '@/components/sections/ProductsSection';
 import PromoBannersSection from '@/components/sections/PromoBannersSection';
 import BigSaleBanner from '@/components/sections/BigSaleBanner';
 import FloatingChat from '@/components/FloatingChat'; // Corrected import path
+import FeaturedProducts from '@/components/sections/FeaturedProducts';
 
 export default function Home() { // Removed (Component, pageProps) as they're not needed for homepage
   return (
@@ -15,7 +16,7 @@ export default function Home() { // Removed (Component, pageProps) as they're no
       <CategoriesSection />
       <ProductsSection title="Best Selling Products" />
       <PromoBannersSection />
-      <ProductsSection title="Featured Products" />
+      <FeaturedProducts title="Featured Products" />
       <BigSaleBanner />
       <FloatingChat />
     </Layout>

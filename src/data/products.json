@@ -1,0 +1,19 @@
+[
+    {
+      "id": 1,
+      "title": "All Kinds Of Toy Testing Equipments",
+      "image": "https://5.imimg.com/data5/SELLER/Default/2021/10/GV/MI/SD/2556085/all-kinds-of-toy-testing-equipments-250x250.jpg",
+      "price": "7,500.00",
+      "rating": 4,
+      "reviews": 4,
+      "category": "Testing Equipment",
+      "slug": "all-kinds-of-toy-testing-equipments",
+      "description": "Comprehensive testing equipment for all types of toys to ensure safety and quality standards.",
+      "specifications": [
+        "Material: Stainless Steel",
+        "Dimensions: 30x30x30 cm",
+        "Weight: 15 kg",
+        "Power: 220V, 50Hz"
+      ]
+    }
+  ]

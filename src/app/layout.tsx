@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import ClientBody from "./ClientBody";
 import CookieConsent from '@/components/Cookies/CookieConsent';
 import BottomNav from "@/components/phone/BottomNav";
+import { AuthProvider } from "./contexts/AuthContext"; // ✅ Import AuthProvider
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,9 +29,11 @@ export default function RootLayout({
         {/* You can add meta tags or fonts here if needed */}
       </head>
       <body className={inter.className}>
-        <ClientBody>{children}</ClientBody>
-        <CookieConsent />
-        <BottomNav />
+        <AuthProvider> {/* ✅ Wrap everything inside AuthProvider */}
+          <ClientBody>{children}</ClientBody>
+          <CookieConsent />
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

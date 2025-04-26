@@ -3,15 +3,15 @@ import React, { useEffect, useState } from 'react'
 import ProductCard from '../product/ProductCard'
 import { Product, fetchProducts } from '@/data/products'
 
-interface ProductsSectionProps {
+interface ReletedProductsSectionProps {
   title?: string
   products?: Product[]
 }
 
-export default function ProductsSection({
+export default function ReletedProductsSection({
   title = "Best Selling Products",
   products: propProducts
-}: ProductsSectionProps) {
+}: ReletedProductsSectionProps) {
   
   const [products, setProducts] = useState<Product[]>([]);
   
@@ -26,7 +26,7 @@ export default function ProductsSection({
   
 
 
-  const productsToDisplay = propProducts || products.filter(product => product.isBestProduct === true).slice(0, 10)
+  const productsToDisplay = propProducts || products.slice(0, 5)
   console.log('Products to display:', productsToDisplay)
   
   return (

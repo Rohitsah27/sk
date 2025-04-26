@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react';
-import { products } from '@/data/products';
+import { fetchProducts } from '@/data/products';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
@@ -19,12 +19,15 @@ interface Product {
   slug: string;
 }
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 240000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+
+  const products = await fetchProducts();
 
   // Extract all unique categories from products
   const allCategories = Array.from(new Set(products.map(product => product.category)));

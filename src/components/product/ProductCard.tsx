@@ -9,7 +9,7 @@ import { Product } from '@/data/products'
 interface ProductCardProps extends Product {}
 
 export default function ProductCard({
-  id,
+  
   title,
   image,
   price,
