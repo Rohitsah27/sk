@@ -26,7 +26,7 @@ export default function FeaturedProducts({
   
 
 
-  const productsToDisplay = propProducts || products.filter(product => product.isfeaturedproduct === true).slice(0, 10)
+  const productsToDisplay = propProducts || products.filter(product => product.isFeatured === true).slice(0, 10)
   console.log('Products to display:', productsToDisplay)
   
   return (

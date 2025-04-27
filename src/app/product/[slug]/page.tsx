@@ -10,11 +10,7 @@ import { getProductBySlug, fetchProducts, Product } from '@/data/products';
 import { notFound } from 'next/navigation';
 import ReletedProductsSection from '@/components/sections/ReletedProductsSection';
 
-// For Static Generation
-export async function generateStaticParams() {
-  const products = await fetchProducts();
-  return products.map((product) => ({ slug: product.slug }));
-}
+
 
 interface ProductDetailPageProps {
   params: { slug: string };
@@ -26,6 +22,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   if (!product) {
     notFound(); // Redirect to 404 if product not found
   }
+
+  const relatedProducts = await fetchProducts(); 
 
   return (
     <Layout>
@@ -78,11 +76,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               )}
 
               {/* Specifications */}
-              {product.specifications?.length > 0 && (
+              {(product?.specifications ?? []).length > 0 && (
                 <div className="border-t border-b py-4 mb-6">
                   <h3 className="font-medium mb-2">Specifications:</h3>
                   <ul className="space-y-1">
-                    {product.specifications.map((spec, idx) => (
+                    {(product?.specifications ?? []).map((spec, idx) => (
                       <li key={idx} className="text-gray-600">• {spec}</li>
                     ))}
                   </ul>
@@ -118,7 +116,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       </section>
 
       {/* Related Products */}
-      <ReletedProductsSection title="You Might Also Like" />
+      <ReletedProductsSection title="You Might Also Like"  products={relatedProducts.slice(0, 5)} />
     </Layout>
   );
 }

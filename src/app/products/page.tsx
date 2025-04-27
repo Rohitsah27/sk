@@ -1,59 +1,39 @@
 "use client"
 
-import { useState } from 'react';
-import { fetchProducts } from '@/data/products';
+import { useEffect, useState } from 'react';
+import {Product,  fetchProducts } from '@/data/products';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-interface Product {
-  id: number;
-  title: string;
-  image: string;
-  price: string;
-  originalPrice?: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  slug: string;
-}
 
-export default async function ProductsPage() {
+export default function ProductsPage() {
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 240000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-
-  const products = await fetchProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+    
+      useEffect(() => {
+        const loadProducts = async () => {
+          const data = await fetchProducts();
+          setProducts(data);
+        };
+    
+        loadProducts();
+      }, []);
 
   // Extract all unique categories from products
   const allCategories = Array.from(new Set(products.map(product => product.category)));
 
   // Filter products based on all criteria
-  const filteredProducts = products.filter(product => {
-    // Convert price string to number (remove commas and parse)
-    const price = parseFloat(product.price.replace(/,/g, ''));
-    
-    // Check price range
-    const priceMatch = price >= priceRange[0] && price <= priceRange[1];
-    
-    // Check category filter
-    const categoryMatch = selectedCategories.length === 0 || 
-                         selectedCategories.includes(product.category);
-    
-    // Check rating filter
-    const ratingMatch = product.rating >= minRating;
-    
-    // Check search query
-    const searchMatch = searchQuery === '' || 
-                       product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return priceMatch && categoryMatch && ratingMatch && searchMatch;
-  });
+  const filteredProducts = products.filter(product => 
+    selectedCategories.length === 0 || selectedCategories.includes(product.category)
+  );
+  
 
   // Handle category selection
   const toggleCategory = (category: string) => {
@@ -97,8 +77,8 @@ export default async function ProductsPage() {
               <div className="bg-white p-4 rounded-lg shadow">
                 <h2 className="text-lg font-semibold mb-4">Categories</h2>
                 <ul className="space-y-2">
-                  {allCategories.map(category => (
-                    <li key={category}>
+                  {allCategories.map((category, idx) => (
+                    <li key={idx}>
                       <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
@@ -252,7 +232,7 @@ export default async function ProductsPage() {
               {/* Pagination */}
               <div className="mt-8 flex justify-between items-center">
                 <p className="text-gray-600">
-                  Showing {Math.min(filteredProducts.length, 12)} of {filteredProducts.length} products
+                  Showing {Math.min(products.length, 12)} of {products.length} products
                 </p>
                 <div className="flex space-x-2">
                   <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50" disabled>

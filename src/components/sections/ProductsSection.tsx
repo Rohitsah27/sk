@@ -26,7 +26,7 @@ export default function ProductsSection({
   
 
 
-  const productsToDisplay = propProducts || products.filter(product => product.isBestProduct === true).slice(0, 10)
+  const productsToDisplay = propProducts || products.filter(product => product.isBestSelling === true).slice(0, 10)
   console.log('Products to display:', productsToDisplay)
   
   return (

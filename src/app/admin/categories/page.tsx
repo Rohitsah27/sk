@@ -1,6 +1,5 @@
 "use client";
 
-import { Category, fetchCategories } from '@/data/categories';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiSearch, FiX, FiUpload } from 'react-icons/fi';
 
@@ -16,8 +15,6 @@ interface Product {
   slug: string;
   description?: string;
   specifications?: string[];
-  isBestSelling?: boolean;
-  isFeatured?: boolean;
 }
 
 export default function ProductsPage() {
@@ -34,38 +31,26 @@ export default function ProductsPage() {
     category: '',
     slug: '',
     description: '',
-    specifications: [],
-    isBestSelling: false,
-    isFeatured: false
+    specifications: []
   });
   const [newSpecification, setNewSpecification] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      const data = await fetchCategories();
-      setCategories(data);
-    };
-
-    loadCategories();
-  }, []);
 
   // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products');
+        const response = await fetch('/api/categories');
         console.log('Response status:', response.status);
-
+        
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch products');
         }
-
+        
         const data = await response.json();
         setProducts(data);
       } catch (err) {
@@ -75,7 +60,7 @@ export default function ProductsPage() {
         setIsLoading(false);
       }
     };
-
+    
     fetchProducts();
   }, []);
 
@@ -87,26 +72,17 @@ export default function ProductsPage() {
 
   // Handle form input changes
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setProductFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setProductFormData(prev => ({
-        ...prev,
-        [name]: name === 'rating' || name === 'reviews' ? parseInt(value) || 0 : value,
-      }));
-    }
+    const { name, value } = e.target;
+    setProductFormData(prev => ({
+      ...prev,
+      [name]: name === 'rating' || name === 'reviews' ? parseInt(value) || 0 : value,
+    }));
   };
 
   // Handle image upload
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-
+    
     const file = e.target.files[0];
     if (!file) return;
 
@@ -138,7 +114,7 @@ export default function ProductsPage() {
 
       setProductFormData(prev => ({
         ...prev,
-        image: data.imageUrl,
+        image: data.imageUrl, // This should be the URL to the image endpoint
       }));
     } catch (err) {
       console.error('Upload error:', err);
@@ -149,17 +125,19 @@ export default function ProductsPage() {
     }
   };
 
-  // Handle edit click
+  // Fixed handleEditClick function
   const handleEditClick = async (product: Product) => {
     setEditingProduct(product);
     setProductFormData({ ...product });
-
+    
     // Set image preview for editing
     if (product.image) {
       try {
+        // If it's already a data URL (from preview), use it directly
         if (product.image.startsWith('data:')) {
           setImagePreview(product.image);
         } else {
+          // Otherwise, fetch the image from MongoDB
           const response = await fetch(product.image);
           if (response.ok) {
             const blob = await response.blob();
@@ -173,11 +151,11 @@ export default function ProductsPage() {
     } else {
       setImagePreview(null);
     }
-
+    
     setIsAddingProduct(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+  
   // Handle add new product click
   const handleAddNewClick = () => {
     setIsAddingProduct(true);
@@ -191,9 +169,7 @@ export default function ProductsPage() {
       category: '',
       slug: '',
       description: '',
-      specifications: [],
-      isBestSelling: false,
-      isFeatured: false
+      specifications: []
     });
     setImagePreview(null);
   };
@@ -201,7 +177,7 @@ export default function ProductsPage() {
   // Add specification
   const handleAddSpecification = () => {
     if (!newSpecification.trim()) return;
-
+    
     setProductFormData(prev => ({
       ...prev,
       specifications: [...(prev.specifications || []), newSpecification.trim()]
@@ -230,7 +206,7 @@ export default function ProductsPage() {
       }
 
       const method = isAddingProduct ? 'POST' : 'PUT';
-      const url = '/api/products';
+      const url = '/api/categories' 
 
       const response = await fetch(url, {
         method,
@@ -239,6 +215,7 @@ export default function ProductsPage() {
         },
         body: JSON.stringify({
           ...productFormData,
+          // Ensure price is a string when sending
           price: productFormData.price.toString(),
         }),
       });
@@ -268,9 +245,7 @@ export default function ProductsPage() {
         category: '',
         slug: '',
         description: '',
-        specifications: [],
-        isBestSelling: false,
-        isFeatured: false
+        specifications: []
       });
       setImagePreview(null);
     } catch (err) {
@@ -284,7 +259,7 @@ export default function ProductsPage() {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      const response = await fetch('/api/products', {
+      const response = await fetch('/api/categories', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -307,17 +282,8 @@ export default function ProductsPage() {
     setIsAddingProduct(false);
     setEditingProduct(null);
     setProductFormData({
-      title: '',
-      image: '',
-      price: '',
       rating: 3,
-      reviews: 0,
-      category: '',
-      slug: '',
-      description: '',
-      specifications: [],
-      isBestSelling: false,
-      isFeatured: false
+      reviews: 0
     });
     setImagePreview(null);
   };
@@ -344,8 +310,8 @@ export default function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">Product Management</h1>
-
+        <h1 className="text-3xl font-bold text-gray-800">Categories Management</h1>
+        
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <button
             onClick={handleAddNewClick}
@@ -353,7 +319,7 @@ export default function ProductsPage() {
           >
             <FiPlus /> Add New Product
           </button>
-
+          
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -385,9 +351,9 @@ export default function ProductsPage() {
                 filteredProducts.map(product => (
                   <tr key={product._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <img
-                        src={product.image || '/placeholder-product.png'}
-                        alt={product.title}
+                      <img 
+                        src={product.image || '/placeholder-product.png'} 
+                        alt={product.title} 
                         className="w-16 h-16 object-cover rounded"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/placeholder-product.png';
@@ -493,49 +459,15 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
-                  <div className="space-y-2">
-                    <div>
-                      <input
-                        type="checkbox"
-                        id="isFeatured"
-                        name="isFeatured"
-                        checked={productFormData.isFeatured || false}
-                        onChange={handleFormChange}
-                        className="mr-2"
-                      />
-                      <label htmlFor="isFeatured" className="text-sm text-gray-700">Featured Product</label>
-                    </div>
-                    <div>
-                      <input
-                        type="checkbox"
-                        id="isBestSelling"
-                        name="isBestSelling"
-                        checked={productFormData.isBestSelling || false}
-                        onChange={handleFormChange}
-                        className="mr-2"
-                      />
-                      <label htmlFor="isBestSelling" className="text-sm text-gray-700">Best Selling Product</label>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-                  <select
+                  <input
+                    type="text"
                     name="category"
                     value={productFormData.category || ''}
                     onChange={handleFormChange}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map(category => (
-                      <option key={category._id} value={category.title}>
-                        {category.title}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 <div>
@@ -581,9 +513,9 @@ export default function ProductsPage() {
                   <div className="flex items-center gap-4">
                     <div className="relative w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
                       {imagePreview ? (
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
                           className="w-full h-full object-cover"
                         />
                       ) : (

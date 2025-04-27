@@ -14,7 +14,7 @@ export default function LoginPage() {
   useEffect(() => {
     // If already authenticated, redirect to the admin panel
     if (isAuthenticated) {
-      router.push('/admin');
+      router.push('/admin/products');
     }
   }, [isAuthenticated, router]);
 

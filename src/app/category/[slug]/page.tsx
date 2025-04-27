@@ -1,24 +1,14 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { fetchProducts } from '@/data/products';
+import {Product, fetchProducts } from '@/data/products';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useParams } from 'next/navigation';
 
-interface Product {
-  id: number;
-  title: string;
-  image: string;
-  price: string;
-  originalPrice?: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  slug: string;
-}
+
 
 export default function CategoryPage() {
   const params = useParams();
@@ -49,22 +39,22 @@ export default function CategoryPage() {
   );
 
   // Filter products based on all criteria
-  const filteredProducts = categoryProducts.filter(product => {
-    // Convert price string to number (remove commas and parse)
-    const price = parseFloat(product.price.replace(/,/g, ''));
+  // const filteredProducts = categoryProducts.filter(product => {
+  //   // Convert price string to number (remove commas and parse)
+  //   const price = parseFloat(product.price.replace(/,/g, ''));
     
-    // Check price range
-    const priceMatch = price >= priceRange[0] && price <= priceRange[1];
+  //   // Check price range
+  //   const priceMatch = price >= priceRange[0] && price <= priceRange[1];
     
-    // Check rating filter
-    const ratingMatch = product.rating >= minRating;
+  //   // Check rating filter
+  //   const ratingMatch = product.rating >= minRating;
     
-    // Check search query
-    const searchMatch = searchQuery === '' || 
-                       product.title.toLowerCase().includes(searchQuery.toLowerCase());
+  //   // Check search query
+  //   const searchMatch = searchQuery === '' || 
+  //                      product.title.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return priceMatch && ratingMatch && searchMatch;
-  });
+  //   return priceMatch && ratingMatch && searchMatch;
+  // });
 
   // Handle price range change
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -109,6 +99,7 @@ export default function CategoryPage() {
                         className={`block p-2 rounded ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-blue-100 font-medium' : 'hover:bg-gray-100'}`}
                       >
                         {category}
+                       
                       </Link>
                     </li>
                   ))}
@@ -181,7 +172,7 @@ export default function CategoryPage() {
                 <h1 className="text-2xl font-bold">
                   {categoryName} Products
                 </h1>
-                <p className="text-gray-600">{filteredProducts.length} products found</p>
+                <p className="text-gray-600">{categoryProducts.length} products found</p>
               </div>
 
               {/* Sorting Options */}
@@ -201,9 +192,9 @@ export default function CategoryPage() {
               </div>
 
               {/* Product Grid */}
-              {filteredProducts.length > 0 ? (
+              {categoryProducts.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredProducts.map((product) => (
+                  {categoryProducts.map((product) => (
                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
                       <Link href={`/product/${product.slug}`}>
                         <div className="relative aspect-square">
@@ -255,7 +246,7 @@ export default function CategoryPage() {
               {/* Pagination */}
               <div className="mt-8 flex justify-between items-center">
                 <p className="text-gray-600">
-                  Showing {Math.min(filteredProducts.length, 12)} of {filteredProducts.length} products
+                  Showing {Math.min(categoryProducts.length, 12)} of {categoryProducts.length} products
                 </p>
                 <div className="flex space-x-2">
                   <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50" disabled>

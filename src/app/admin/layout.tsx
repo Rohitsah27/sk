@@ -20,6 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setTimeout(() => {
         setShowFullLayout(true);
       }, 500);
+      
     }
   }, [isAuthenticated, router, isLoggingOut]);
 
@@ -47,7 +48,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6">
+          
+          {children}</main>
       </div>
     </div>
   );

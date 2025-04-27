@@ -8,19 +8,9 @@ import { PhoneCall, Mail, ChevronDown, Search, User, ShoppingCart, X, ChevronRig
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 // import { products } from '@/data/products'
-import {fetchProducts } from "@/data/products";
+import {Product, fetchProducts } from "@/data/products";
 
-interface Product {
-  id: number;
-  title: string;
-  image: string;
-  price: string;
-  originalPrice?: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  slug: string;
-}
+
 
 export default function Header() {
   const router = useRouter()
@@ -44,7 +34,7 @@ export default function Header() {
   }, []);
 
   // Get unique categories from products
-  const categories = products.map(product => product.category)
+  const categories = [...new Set(products.map(product => product.category))]
     .map(category => ({
       name: category,
       slug: category.toLowerCase().replace(/\s+/g, '-')
@@ -265,8 +255,8 @@ export default function Header() {
             {isCategoryOpen && (
               <div className="absolute left-0 w-56 bg-white text-gray-800 shadow-lg z-50 rounded-b-md">
                 <ul className="py-1">
-                  {allCategories.map((category) => (
-                    <li key={category.slug}>
+                  {allCategories.map((category,ctIdx) => (
+                    <li key={ctIdx}>
                       <button
                         onClick={() => handleCategoryClick(category.slug)}
                         className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 text-left"
