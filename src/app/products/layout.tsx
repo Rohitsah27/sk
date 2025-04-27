@@ -1,6 +1,7 @@
-import { products } from '@/data/products';
+import { fetchProducts } from '@/data/products';
 
 export async function generateStaticParams() {
+  const products = await fetchProducts();
   const categories = Array.from(new Set(products.map(product => product.category)));
   
   return categories.map(category => ({
