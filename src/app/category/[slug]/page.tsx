@@ -8,8 +8,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useParams } from 'next/navigation';
 
-
-
 export default function CategoryPage() {
   const params = useParams();
   const categorySlug = params?.slug as string || '';
@@ -25,14 +23,18 @@ export default function CategoryPage() {
   // Get products for this category
   const [products, setProducts] = useState<Product[]>([]);
   
-    useEffect(() => {
-      const loadProducts = async () => {
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
         const data = await fetchProducts();
         setProducts(data);
-      };
+      } catch (error) {
+        console.error('Failed to load products:', error);
+      }
+    };
+    loadProducts();
+  }, []);
   
-      loadProducts();
-    }, []);
   
   const categoryProducts = products.filter(product => 
     product.category.toLowerCase() === categoryName.toLowerCase()

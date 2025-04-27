@@ -1,8 +1,11 @@
-import { generateStaticParams } from '@/data/products';
+import { products } from '@/data/products';
 
 export async function generateStaticParams() {
-  const params = await generateStaticParams();
-  return params;
+  const categories = Array.from(new Set(products.map(product => product.category)));
+  
+  return categories.map(category => ({
+    slug: category.toLowerCase().replace(/\s+/g, '-')
+  }));
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

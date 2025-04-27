@@ -29,7 +29,7 @@ export default function RootLayout({
         {/* You can add meta tags or fonts here if needed */}
       </head>
       <body className={inter.className}>
-        <AuthProvider> {/* ✅ Wrap everything inside AuthProvider */}
+        <AuthProvider>
           <ClientBody>{children}</ClientBody>
           <CookieConsent />
           <BottomNav />

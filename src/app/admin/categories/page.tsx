@@ -7,14 +7,14 @@ interface Product {
   _id: string;
   title: string;
   image: string;
-  price: string;
-  originalPrice?: string;
-  rating: number;
-  reviews: number;
+  // price: string;
+  // originalPrice?: string;
+  // rating: number;
+  // reviews: number;
   category: string;
-  slug: string;
-  description?: string;
-  specifications?: string[];
+  // slug: string;
+  // description?: string;
+  // specifications?: string[];
 }
 
 export default function ProductsPage() {
@@ -25,13 +25,13 @@ export default function ProductsPage() {
   const [productFormData, setProductFormData] = useState<Partial<Product>>({
     title: '',
     image: '',
-    price: '',
-    rating: 3,
-    reviews: 0,
-    category: '',
-    slug: '',
-    description: '',
-    specifications: []
+    // price: '',
+    // rating: 3,
+    // reviews: 0,
+    category: ''
+    // slug: '',
+    // description: '',
+    // specifications: []
   });
   const [newSpecification, setNewSpecification] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -163,35 +163,35 @@ export default function ProductsPage() {
     setProductFormData({
       title: '',
       image: '',
-      price: '',
-      rating: 3,
-      reviews: 0,
-      category: '',
-      slug: '',
-      description: '',
-      specifications: []
+      // price: '',
+      // rating: 3,
+      // reviews: 0,
+      category: ''
+      // slug: '',
+      // description: '',
+      // specifications: []
     });
     setImagePreview(null);
   };
 
   // Add specification
-  const handleAddSpecification = () => {
-    if (!newSpecification.trim()) return;
+  // const handleAddSpecification = () => {
+  //   if (!newSpecification.trim()) return;
     
-    setProductFormData(prev => ({
-      ...prev,
-      specifications: [...(prev.specifications || []), newSpecification.trim()]
-    }));
-    setNewSpecification('');
-  };
+  //   setProductFormData(prev => ({
+  //     ...prev,
+  //     specifications: [...(prev.specifications || []), newSpecification.trim()]
+  //   }));
+  //   setNewSpecification('');
+  // };
 
   // Remove specification
-  const handleRemoveSpecification = (index: number) => {
-    setProductFormData(prev => ({
-      ...prev,
-      specifications: (prev.specifications || []).filter((_, i) => i !== index)
-    }));
-  };
+  // const handleRemoveSpecification = (index: number) => {
+  //   setProductFormData(prev => ({
+  //     ...prev,
+  //     specifications: (prev.specifications || []).filter((_, i) => i !== index)
+  //   }));
+  // };
 
   // Submit product form (both add and edit)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -200,7 +200,7 @@ export default function ProductsPage() {
 
     try {
       // Validate required fields
-      if (!productFormData.title || !productFormData.price || !productFormData.category) {
+      if (!productFormData.title || !productFormData.category) {
         setError('Please fill in all required fields');
         return;
       }
@@ -216,7 +216,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           ...productFormData,
           // Ensure price is a string when sending
-          price: productFormData.price.toString(),
+          // price: productFormData.price.toString(),
         }),
       });
 
@@ -239,13 +239,13 @@ export default function ProductsPage() {
       setProductFormData({
         title: '',
         image: '',
-        price: '',
-        rating: 3,
-        reviews: 0,
-        category: '',
-        slug: '',
-        description: '',
-        specifications: []
+        // price: '',
+        // rating: 3,
+        // reviews: 0,
+        category: ''
+        // slug: '',
+        // description: '',
+        // specifications: []
       });
       setImagePreview(null);
     } catch (err) {
@@ -282,8 +282,8 @@ export default function ProductsPage() {
     setIsAddingProduct(false);
     setEditingProduct(null);
     setProductFormData({
-      rating: 3,
-      reviews: 0
+      // rating: 3,
+      // reviews: 0
     });
     setImagePreview(null);
   };
@@ -341,8 +341,6 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -362,28 +360,10 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">{product.title}</div>
-                      <div className="text-sm text-gray-500">{product.slug}</div>
+                      {/* <div className="text-sm text-gray-500">{product.slug}</div> */}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {product.category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {product.price}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`w-5 h-5 ${i < product.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                        <span className="ml-2 text-sm text-gray-500">({product.reviews})</span>
-                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
@@ -407,7 +387,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                     No products found
                   </td>
                 </tr>
@@ -447,18 +427,6 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={productFormData.slug || ''}
-                    onChange={handleFormChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
                   <input
                     type="text"
@@ -468,42 +436,6 @@ export default function ProductsPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price*</label>
-                  <input
-                    type="text"
-                    name="price"
-                    value={productFormData.price || ''}
-                    onChange={handleFormChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                    <input
-                      type="number"
-                      name="rating"
-                      value={productFormData.rating || 3}
-                      onChange={handleFormChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      min="1" max="5"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reviews</label>
-                    <input
-                      type="number"
-                      name="reviews"
-                      value={productFormData.reviews || 0}
-                      onChange={handleFormChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -547,51 +479,6 @@ export default function ProductsPage() {
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    name="description"
-                    value={productFormData.description || ''}
-                    onChange={handleFormChange}
-                    rows={4}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Specifications</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={newSpecification}
-                  onChange={(e) => setNewSpecification(e.target.value)}
-                  placeholder="Add new specification"
-                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddSpecification}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="space-y-2">
-                {productFormData.specifications?.map((spec, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                    <span>{spec}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSpecification(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <FiX size={18} />
-                    </button>
-                  </div>
-                ))}
               </div>
             </div>
 

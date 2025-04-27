@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const database = client.db("productDb");
 
     // Basic validation
-    if (!productData.title || !productData.price || !productData.category) {
+    if (!productData.title || !productData.category) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure numeric values are properly converted
-    productData.price = parseFloat(productData.price);
-    productData.rating = parseInt(productData.rating) || 0;
-    productData.reviews = parseInt(productData.reviews) || 0;
+    // productData.price = parseFloat(productData.price);
+    // productData.rating = parseInt(productData.rating) || 0;
+    // productData.reviews = parseInt(productData.reviews) || 0;
 
     const result = await database.collection('categories').insertOne(productData);
     console.log('Insert result:', result); // Debug log
