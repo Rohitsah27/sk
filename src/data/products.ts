@@ -12,6 +12,8 @@ export interface Product {
   slug: string;
   description?: string;
   specifications?: string[];
+  isBestSelling?: boolean;
+  isFeatured?: boolean;
 }
 
 

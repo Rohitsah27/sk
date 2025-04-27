@@ -19,10 +19,13 @@ export default function ProductCard({
   category,
   slug
 }: ProductCardProps) {
-  return (
+
+    return (
     <Card className="overflow-hidden h-full flex flex-col group hover:shadow-lg transition-shadow duration-300">
       <div className="relative group">
-        <Link href={`/product/${slug}`}>
+        
+        <Link href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}>
+       
           <div className="overflow-hidden bg-white">
             <Image
               src={image}
@@ -57,7 +60,7 @@ export default function ProductCard({
         >
           {category}
         </Link>
-        <Link href={`/product/${slug}`} className="block">
+        <Link href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`} className="block">
           <h3 className="font-medium text-gray-800 hover:text-[hsl(var(--bonik-pink))] transition-colors line-clamp-2 mb-2">
             {title}
           </h3>

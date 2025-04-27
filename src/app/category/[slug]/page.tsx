@@ -12,9 +12,7 @@ export default function CategoryPage() {
   const params = useParams();
   const categorySlug = params?.slug as string || '';
   
-  // Convert slug back to category name
-  const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  
+
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 240000]);
   const [minRating, setMinRating] = useState<number>(0);
@@ -22,6 +20,10 @@ export default function CategoryPage() {
 
   // Get products for this category
   const [products, setProducts] = useState<Product[]>([]);
+
+    // Convert slug back to category name
+    const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
   
   useEffect(() => {
     const loadProducts = async () => {
@@ -198,7 +200,7 @@ export default function CategoryPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {categoryProducts.map((product) => (
                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
-                      <Link href={`/product/${product.slug}`}>
+                      <Link href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`}>
                         <div className="relative aspect-square">
                           <Image
                             src={product.image}

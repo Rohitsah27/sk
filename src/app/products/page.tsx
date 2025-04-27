@@ -181,7 +181,8 @@ export default function ProductsPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
-                      <Link href={`/product/${product.slug}`}>
+                     
+                      <Link href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`} >
                         <div className="relative aspect-square">
                           <Image
                             src={product.image}

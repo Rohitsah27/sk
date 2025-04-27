@@ -17,13 +17,19 @@ interface ProductDetailPageProps {
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const product = await getProductBySlug(params.slug);
+  let currSlug = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  const product = await getProductBySlug(currSlug);
+
+  console.log(currSlug)
 
   if (!product) {
     notFound(); // Redirect to 404 if product not found
   }
 
   const relatedProducts = await fetchProducts(); 
+  
+
+  // console.log(relatedProducts);
 
   return (
     <Layout>
