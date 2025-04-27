@@ -41,3 +41,13 @@ export const updateProduct = async (id: number, updatedProduct: Partial<Product>
   }
   return undefined;
 };
+
+
+export const generateStaticParams = async () => {
+  const products = await fetchProducts();
+  const categories = Array.from(new Set(products.map(product => product.category))); // Get unique categories
+
+  return categories.map(category => ({
+    slug: category.toLowerCase().replace(/\s+/g, '-') // Slugify category name
+  }));
+};
