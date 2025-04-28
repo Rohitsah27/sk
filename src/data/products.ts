@@ -18,7 +18,7 @@ export interface Product {
 
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = 'https://sk-equipments.netlify.app';
   const res = await fetch(`${baseUrl}/api/products`); // Now fetching from your server
   const data = await res.json();
   return data;
