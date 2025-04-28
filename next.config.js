@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // output: 'export',
-  distDir: 'out',
+  output: 'export',   // ✅ this will create static HTML/CSS/JS in 'out/' folder
+  distDir: 'out',     // ✅ output directory
   images: {
-    unoptimized: true,
+    unoptimized: true, // ✅ needed because Netlify doesn't optimize Next.js images by default
     remotePatterns: [
       {
         protocol: 'https',
@@ -21,4 +21,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default nextConfig;

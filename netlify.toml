@@ -1,12 +1,18 @@
-[images]
-  remote_images = ["https://source.unsplash.com/.*", "https://images.unsplash.com/.*", "https://ext.same-assets.com/.*", "https://ugc.same-assets.com/.*"]
-
 [build]
   command = "bun run build"
-  publish = ".next"
+  publish = "out" # because output is 'export', Next.js will generate 'out' folder
 
 [build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  # No need to set NETLIFY_NEXT_PLUGIN_SKIP anymore
+  # This block can be left empty if you want or used for other environment variables
+  NODE_VERSION = "18" # example, optional
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[images]
+  remote_images = [
+    "https://source.unsplash.com/.*",
+    "https://images.unsplash.com/.*",
+    "https://ext.same-assets.com/.*",
+    "https://ugc.same-assets.com/.*"
+  ]
+
+# No need for any plugin block when using static export
