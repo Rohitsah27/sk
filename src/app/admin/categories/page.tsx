@@ -25,14 +25,7 @@ export default function ProductsPage() {
   const [productFormData, setProductFormData] = useState<Partial<Product>>({
     title: '',
     image: '',
-    // price: '',
-    // rating: 3,
-    // reviews: 0,
-    category: ''
-    // slug: '',
-    // description: '',
-    // specifications: []
-  });
+    category: ''  });
   const [newSpecification, setNewSpecification] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,9 +156,6 @@ export default function ProductsPage() {
     setProductFormData({
       title: '',
       image: '',
-      // price: '',
-      // rating: 3,
-      // reviews: 0,
       category: ''
       // slug: '',
       // description: '',

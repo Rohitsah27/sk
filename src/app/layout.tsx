@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
-import ClientBody from "./ClientBody";
 import CookieConsent from '@/components/Cookies/CookieConsent';
 import BottomNav from "@/components/phone/BottomNav";
-import { AuthProvider } from "./contexts/AuthContext"; // ✅ Import AuthProvider
+import { AuthProvider } from "./contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,11 +25,10 @@ export default function RootLayout({
         <link rel="icon" href="/assets/images/logo/favicon.ico" sizes="any" />
         {/* Apple Touch Icon */}
         <link rel="apple-touch-icon" href="/assets/images/logo/sklogo.png" />
-        {/* You can add meta tags or fonts here if needed */}
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <ClientBody>{children}</ClientBody>
+          {children}
           <CookieConsent />
           <BottomNav />
         </AuthProvider>

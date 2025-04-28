@@ -21,6 +21,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.9.2",
+    "gsap": "^3.12.7",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.13.2",
