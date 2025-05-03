@@ -19,8 +19,11 @@ export interface Product {
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    // Use a relative URL path instead of relying on environment variables in client components
-    const res = await fetch('/api/products');
+    // Use absolute URL with window.location.origin for client components
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const url = `${baseUrl}/api/products`;
+    
+    const res = await fetch(url);
 
     if (!res.ok) {
       throw new Error(`Failed to fetch products: ${res.status} ${res.statusText}`);
