@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const database = client.db("productDb");
 
     // Basic validation
-    if (!productData.title || !productData.price || !productData.category) {
+    if (!productData.title || !productData.category) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }

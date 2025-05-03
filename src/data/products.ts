@@ -18,10 +18,18 @@ export interface Product {
 
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const baseUrl = 'https://sk-equipments.netlify.app';
-  const res = await fetch(`${baseUrl}/api/products`); // Now fetching from your server
-  const data = await res.json();
-  return data;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/products`); // Ensure the API route exists and is correct
+  if (!res.ok) {
+    throw new Error(`Failed to fetch products: ${res.status} ${res.statusText}`);
+  }
+  const contentType = res.headers.get('Content-Type');
+  if (contentType && contentType.includes('application/json')) {
+    const data = await res.json();
+    return data;
+  } else {
+    throw new Error('Invalid response format: Expected JSON');
+  }
 };
 
 export const getProductBySlug = async (slug: string): Promise<Product | undefined> => {

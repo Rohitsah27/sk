@@ -16,7 +16,7 @@ export interface Category {
   
   
   export const fetchCategories = async (): Promise<Category[]> => {
-    const baseUrl = 'https://sk-equipments.netlify.app';
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/categories`); // Now fetching from your server
     const data = await res.json();
     return data;

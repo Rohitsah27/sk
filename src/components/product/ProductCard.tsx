@@ -49,13 +49,15 @@ export default function ProductCard({
           </div>
         </Link>
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
-          <Button
-            size="sm"
-            className="bg-[hsl(var(--bonik-blue))/90] hover:bg-[hsl(var(--bonik-blue))/90] text-white border-none shadow-none"
-          >
-            <ShoppingCart size={16} className="mr-2" />
-            Quick View
-          </Button>
+          <Link href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}>
+            <Button
+              size="sm"
+              className="bg-[hsl(var(--bonik-blue))/90] hover:bg-[hsl(var(--bonik-blue))/90] text-white border-none shadow-none"
+            >
+              <ShoppingCart size={16} className="mr-2" />
+              Quick View
+            </Button>
+          </Link>
         </div>
       </div>
       <CardContent className="p-4 flex-grow flex flex-col">

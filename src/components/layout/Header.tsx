@@ -290,7 +290,7 @@ export default function Header() {
                             transition={{ duration: 0.2, delay: Idx * 0.05 }}
                           >
                             <Link
-                              href={`/product/${product.slug}`}
+                              href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`}
                               className="flex items-center px-4 py-2 hover:bg-gray-100"
                               onClick={() => {
                                 setSearchQuery('')

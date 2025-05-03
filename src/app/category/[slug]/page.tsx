@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from 'react';
 import { Product, fetchProducts } from '@/data/products';
@@ -19,7 +19,7 @@ export default function CategoryPage() {
   const [minRating, setMinRating] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const productsPerPage = 10;
+  const productsPerPage = 12;
 
   // Loading state
   const [loading, setLoading] = useState<boolean>(true);
@@ -75,7 +75,10 @@ export default function CategoryPage() {
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentPage(pageNumber);
+  };
 
   // Handle price range change
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -109,6 +112,114 @@ export default function CategoryPage() {
         duration: 0.5
       }
     }
+  };
+
+  // Render pagination controls
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust if we're at the beginning or end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      if (currentPage < totalPages / 2) {
+        endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      } else {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+    }
+
+    // First page and ellipsis
+    if (startPage > 1) {
+      pages.push(
+        <motion.button
+          key={1}
+          onClick={() => paginate(1)}
+          className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          1
+        </motion.button>
+      );
+      if (startPage > 2) {
+        pages.push(<span key="start-ellipsis" className="px-2">...</span>);
+      }
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <motion.button
+          key={i}
+          onClick={() => paginate(i)}
+          className={`px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {i}
+        </motion.button>
+      );
+    }
+
+    // Last page and ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<span key="end-ellipsis" className="px-2">...</span>);
+      }
+      pages.push(
+        <motion.button
+          key={totalPages}
+          onClick={() => paginate(totalPages)}
+          className={`px-3 py-1 rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {totalPages}
+        </motion.button>
+      );
+    }
+
+    return (
+      <motion.div 
+        className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <p className="text-gray-600 text-sm">
+          Showing {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} of {filteredProducts.length} products
+        </p>
+        
+        <div className="flex items-center gap-2">
+          <motion.button 
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Previous
+          </motion.button>
+          
+          <div className="flex gap-1">
+            {pages}
+          </div>
+          
+          <motion.button 
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Next
+          </motion.button>
+        </div>
+      </motion.div>
+    );
   };
 
   return (
@@ -259,7 +370,7 @@ export default function CategoryPage() {
               {/* Product Grid */}
               {loading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {Array.from({ length: 8 }).map((_, index) => (
+                  {Array.from({ length: 12 }).map((_, index) => (
                     <div key={index} className="bg-white rounded-lg shadow overflow-hidden">
                       <Skeleton className="aspect-square w-full" />
                       <div className="p-4 space-y-2">
@@ -274,7 +385,7 @@ export default function CategoryPage() {
                   className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                   layout
                 >
-                  <AnimatePresence>
+                  <AnimatePresence mode="wait">
                     {currentProducts.map((product) => (
                       <motion.div 
                         key={product._id}
@@ -282,10 +393,18 @@ export default function CategoryPage() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ 
+                          duration: 0.3,
+                          layout: {
+                            type: "spring",
+                            stiffness: 100,
+                            damping: 20
+                          }
+                        }}
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                         className="bg-white rounded-lg shadow overflow-hidden"
                       >
+                        {/* Your product card content remains the same */}
                         <Link href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`}>
                           <div className="relative aspect-square">
                             <Image
@@ -342,65 +461,7 @@ export default function CategoryPage() {
               )}
 
               {/* Pagination */}
-              {filteredProducts.length > productsPerPage && (
-                <motion.div 
-                  className="mt-8 flex justify-between items-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <p className="text-gray-600">
-                    Showing {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} of {filteredProducts.length} products
-                  </p>
-                  <div className="flex space-x-2">
-                    <motion.button 
-                      onClick={() => paginate(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Previous
-                    </motion.button>
-                    {Array.from({ length: Math.min(5, totalPages) }).map((_, index) => {
-                      // Show limited page numbers with ellipsis
-                      let pageNumber;
-                      if (totalPages <= 5) {
-                        pageNumber = index + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = index + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + index;
-                      } else {
-                        pageNumber = currentPage - 2 + index;
-                      }
-
-                      return (
-                        <motion.button
-                          key={index}
-                          onClick={() => paginate(pageNumber)}
-                          className={`px-4 py-2 rounded ${currentPage === pageNumber ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          {pageNumber}
-                        </motion.button>
-                      );
-                    })}
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <span className="px-2 py-2">...</span>
-                    )}
-                    <motion.button 
-                      onClick={() => paginate(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Next
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
+              {renderPagination()}
             </motion.div>
           </motion.div>
         </div>

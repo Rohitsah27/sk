@@ -3,13 +3,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   const navItems = [
     // { href: '/admin', label: 'Dashboard', icon: '📊' },
-    
     { href: '/admin/products', label: 'Products', icon: '🛍️' },
     // { href: '/admin/orders', label: 'Orders', icon: '📦' },
     { href: '/admin/categories', label: 'Categories', icon: '📦' },
@@ -19,7 +19,10 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-gray-800 text-white">
       <div className="p-4 border-b border-gray-700">
-        <h2 className="text-xl font-semibold">S K Equipments</h2>
+      <Link href="/" className="flex items-center justify-center">
+        <Image src="/assets/images/logo/sklogo.png" alt="sk" width={150} height={105} />
+      </Link>
+      <h2 className="text-sm  mt-4 text-center">S K Equipments</h2>
       </div>
       <nav className="p-4">
         <ul className="space-y-2">
