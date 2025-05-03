@@ -25,6 +25,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.9.2",
     "gsap": "^3.12.7",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.13.2",
