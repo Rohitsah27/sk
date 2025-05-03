@@ -26,7 +26,7 @@ export default function RootLayout({
         {/* Apple Touch Icon */}
         <link rel="apple-touch-icon" href="/assets/images/logo/sklogo.png" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className}`} suppressHydrationWarning>
         <AuthProvider>
           {children}
           <CookieConsent />
