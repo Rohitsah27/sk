@@ -15,7 +15,7 @@ export default function RelatedProductsSection({
   products
 }: RelatedProductsSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [slidesToShow, setSlidesToShow] = useState(5);
+  const [slidesToShow, setSlidesToShow] = useState(products.length);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Handle responsive slides
