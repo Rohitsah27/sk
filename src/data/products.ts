@@ -34,6 +34,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
 };
 
 
+
 // export const fetchProducts = async (): Promise<Product[]> => {
 //   const baseUrl = 'https://sk-equipments.netlify.app'; // Hardcoded BASE_URL
 
