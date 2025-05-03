@@ -19,11 +19,14 @@ export interface Product {
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    // Use absolute URL with window.location.origin for client components
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const url = `${baseUrl}/api/products`;
+    // Use absolute URL with proper fallback for server components
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.BASE_URL || 'http://localhost:3000';
     
-    const res = await fetch(url);
+    const url = new URL('/api/products', baseUrl).toString();
+    
+    const res = await fetch(url, { cache: 'no-store' });
 
     if (!res.ok) {
       throw new Error(`Failed to fetch products: ${res.status} ${res.statusText}`);

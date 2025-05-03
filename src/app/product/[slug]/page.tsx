@@ -13,7 +13,9 @@ interface ProductDetailPageProps {
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  let currSlug = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  // Ensure params is properly awaited
+  const slug = params?.slug || '';
+  let currSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const product = await getProductBySlug(currSlug);
 
   if (!product) {
