@@ -15,25 +15,25 @@ export interface Category {
   }
   
   
-  // export const fetchCategories = async (): Promise<Category[]> => {
-  //   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-
-  //   const res = await fetch(`${baseUrl}/api/categories`); // Now fetching from your server
-  //   const data = await res.json();
-  //   return data;
-  // };
-
   export const fetchCategories = async (): Promise<Category[]> => {
-    const baseUrl = 'https://sk-equipments.netlify.app'; // Hardcoded BASE_URL
-  
-    const res = await fetch(`${baseUrl}/api/categories`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch categories: ${res.status} ${res.statusText}`);
-    }
-  
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+    const res = await fetch(`${baseUrl}/api/categories`); // Now fetching from your server
     const data = await res.json();
     return data;
   };
+
+  // export const fetchCategories = async (): Promise<Category[]> => {
+  //   const baseUrl = 'https://sk-equipments.netlify.app'; // Hardcoded BASE_URL
+  
+  //   const res = await fetch(`${baseUrl}/api/categories`);
+  //   if (!res.ok) {
+  //     throw new Error(`Failed to fetch categories: ${res.status} ${res.statusText}`);
+  //   }
+  
+  //   const data = await res.json();
+  //   return data;
+  // };
   
   
   export const getProductBySlug = async (slug: string): Promise<Category | undefined> => {
