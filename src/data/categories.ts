@@ -16,9 +16,13 @@ export interface Category {
   
   
   export const fetchCategories = async (): Promise<Category[]> => {
-    const baseUrl ='http://localhost:3000';
-
-    const res = await fetch(`${baseUrl}/api/categories`); // Now fetching from your server
+    // Use relative URL path instead of hardcoded hostname
+    const res = await fetch('/api/categories');
+    
+    if (!res.ok) {
+      throw new Error(`Failed to fetch categories: ${res.status} ${res.statusText}`);
+    }
+    
     const data = await res.json();
     return data;
   };
