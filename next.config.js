@@ -1,21 +1,16 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export', // Keep this enabled for static export
+  // output: 'export', // Uncomment if you want static export
   distDir: 'out',
-  trailingSlash: true, // Add this for better Netlify compatibility
   images: {
-    unoptimized: true, // Required for static exports
+    unoptimized: true, // Only needed for static exports
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'ext.same-assets.com',
         pathname: '**',
       },
-      {
-        protocol: 'https',
-        hostname: 'ugc.same-assets.com',
-        pathname: '**',
-      }
     ],
   },
   typescript: {
