@@ -26,7 +26,7 @@ export interface Category {
     const data = await res.json();
     return data;
   };
-
+//
   // export const fetchCategories = async (): Promise<Category[]> => {
   //   const baseUrl = 'https://sk-equipments.netlify.app'; // Hardcoded BASE_URL
   
