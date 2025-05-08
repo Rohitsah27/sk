@@ -16,8 +16,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   let currSlug = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   const product = await getProductBySlug(currSlug);
 
+  
+
   if (!product) {
-    notFound();
+    return <div>Loading...</div>;
   }
 
   const relatedProducts = await fetchProducts();
@@ -129,7 +131,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         title="You Might Also Like"
         products={relatedProducts
           .filter(p => p._id !== product._id)
-          .slice(0, 5)}
+          .slice(0, 50)}
       />
 
       {/* Add this script for the zoom effect */}
