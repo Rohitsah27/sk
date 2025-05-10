@@ -13,11 +13,14 @@ interface ProductDetailPageProps {
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  let currSlug = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  const product = await getProductBySlug(currSlug);
+  const { slug } = params;  // await is not required here since `params` is already destructured.
 
+  // Transform slug (if necessary)
+  let currSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   
-
+  // Fetch product data
+  const product = await getProductBySlug(currSlug);
+  
   if (!product) {
     return <div>Loading...</div>;
   }

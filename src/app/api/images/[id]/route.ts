@@ -19,6 +19,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid image ID' }, { status: 400 });
     }
 
+    console.log('Image ID:', params.id);
     const objectId = new ObjectId(params.id);
     const bucket = new GridFSBucket(database, {
       bucketName: 'productImages'
