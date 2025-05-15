@@ -44,16 +44,41 @@ export const fetchProducts = async (): Promise<Product[]> => {
 export async function getProductBySlug(slug: string) {
   try {
     const normalizedSlug = slug.toLowerCase();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+    
+    // Use the same URL construction as fetchProducts
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.BASE_URL || 'http://localhost:3000';
+    
+    const url = new URL('/api/products', baseUrl).toString();
+    
+    const response = await fetch(url, { 
+      cache: 'no-store',
+      next: { revalidate: 0 }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
+    }
+
     const products = await response.json();
     
-    return products.find((product: Product) => 
+    // Find product with case-insensitive match for both title and slug
+    const product = products.find((product: Product) => 
       product.title.toLowerCase() === normalizedSlug ||
-      product.slug?.toLowerCase() === normalizedSlug
+      (product.slug && product.slug.toLowerCase() === normalizedSlug)
     );
+
+    if (!product) {
+      console.log(`Product not found for slug: ${slug}`);
+      return null;
+    }
+
+    return product;
+
   } catch (error) {
     console.error('Error fetching product by slug:', error);
-    return null;
+    throw new Error('Failed to fetch product');
   }
 }
 
