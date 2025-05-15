@@ -17,6 +17,8 @@ export interface Product {
 }
 
 
+
+
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
     // Use absolute URL with proper fallback for server components
