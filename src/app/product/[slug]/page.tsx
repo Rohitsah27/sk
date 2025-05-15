@@ -11,24 +11,48 @@ import ZoomableImage from '@/components/product/ZoomableImage';
 import ProductLoading from './loading';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 
+// Add this before the ProductDetailPage component
+export async function generateStaticParams() {
+  const products = await fetchProducts();
+  
+  return products.map((product) => ({
+    slug: product.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+  }));
+}
+
 interface ProductDetailPageProps {
   params: { slug: string };
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = params;
-  let currSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   
-  // Fetch product data
-  const product = await getProductBySlug(currSlug);
+  // Normalize the slug to handle case sensitivity
+  const normalizedSlug = decodeURIComponent(slug)
+    .toLowerCase()
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
   
+  // First try exact match
+  let product = await getProductBySlug(normalizedSlug);
+  
+  // If not found, try case-insensitive match
+  if (!product) {
+    const allProducts = await fetchProducts();
+    product = allProducts.find(p => 
+      p.title.toLowerCase() === normalizedSlug.toLowerCase() ||
+      p.slug?.toLowerCase() === slug.toLowerCase()
+    );
+  }
+
   if (!product) {
     return notFound();
   }
 
   const relatedProducts = await fetchProducts();
-
-  // Create an array of all images (main + additional)
   const allImages = [product.image, ...(product.additionalImages || [])];
 
   return (
@@ -39,11 +63,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Product Images Section */}
               <div className="relative">
-  <ProductImageGallery 
-    images={[product.image, ...(product.additionalImages || [])]} 
-    title={product.title}
-  />
-</div>
+                <ProductImageGallery 
+                  images={[product.image, ...(product.additionalImages || [])]} 
+                  title={product.title}
+                />
+              </div>
               {/* Product Info - Scrollable Content */}
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{product.title}</h1>

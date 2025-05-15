@@ -16,3 +16,8 @@
   ]
 
 # No need for any plugin block when using static export
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

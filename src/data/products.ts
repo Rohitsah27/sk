@@ -41,10 +41,21 @@ export const fetchProducts = async (): Promise<Product[]> => {
 };
 
 
-export const getProductBySlug = async (slug: string): Promise<Product | undefined> => {
-  const products = await fetchProducts();
-  return products.find(product => product.slug === slug);
-};
+export async function getProductBySlug(slug: string) {
+  try {
+    const normalizedSlug = slug.toLowerCase();
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+    const products = await response.json();
+    
+    return products.find((product: Product) => 
+      product.title.toLowerCase() === normalizedSlug ||
+      product.slug?.toLowerCase() === normalizedSlug
+    );
+  } catch (error) {
+    console.error('Error fetching product by slug:', error);
+    return null;
+  }
+}
 
 export const getFeaturedProducts = async (count: number = 4): Promise<Product[]> => {
   const products = await fetchProducts();

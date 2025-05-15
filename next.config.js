@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // output: 'export', // Uncomment if you want static export
+  output: 'standalone',
   distDir: 'out',
   images: {
     unoptimized: true, // Only needed for static exports
@@ -11,7 +11,13 @@ const nextConfig = {
         hostname: 'ext.same-assets.com',
         pathname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 'sk-equipments.netlify.app',
+        pathname: '**',
+      }
     ],
+    domains: ['sk-equipments.netlify.app'], // Add your image domains here
   },
   typescript: {
     ignoreBuildErrors: true, // Use with caution
@@ -19,6 +25,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Use with caution
   },
+  trailingSlash: true, // Add this line
   // Optional: Add security headers
   async headers() {
     return [
