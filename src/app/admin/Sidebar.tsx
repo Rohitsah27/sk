@@ -13,7 +13,7 @@ export default function Sidebar() {
     { href: '/admin/products', label: 'Products', icon: '🛍️' },
     // { href: '/admin/orders', label: 'Orders', icon: '📦' },
     { href: '/admin/categories', label: 'Categories', icon: '📦' },
-    // { href: '/admin/users', label: 'Users', icon: '👥' },
+    { href: '/admin/subcategories', label: 'Sub Categories', icon: '📂' },
   ];
 
   return (

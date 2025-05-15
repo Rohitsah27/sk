@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, GridFSBucket, ObjectId } from 'mongodb';
 
 
-
 const uri = process.env.MONGODB_URI as string;
 
 export async function GET(

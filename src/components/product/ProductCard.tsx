@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Star, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function ProductCard({
   category,
   slug,
 }: ProductCardProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,14 +30,23 @@ export default function ProductCard({
     img.onload = () => setLoading(false); // Set loading to false once image is loaded
   }, [image]);
 
+  const handleProductClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const productUrl = `/product/${slug.toLowerCase().replace(/\s+/g, '-')}`;
+    router.push(productUrl);
+  };
+
   return (
     <Card className="overflow-hidden h-full flex flex-col group hover:shadow-lg transition-shadow duration-300">
       <div className="relative group">
-        <Link href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}>
+        <Link 
+          href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}
+          onClick={handleProductClick}
+        >
           <div className="overflow-hidden bg-white">
             {loading ? (
               <div className="w-full h-[220px] flex items-center justify-center bg-gray-200 animate-pulse">
-                <Skeleton className="h-[220px] w-[250px] rounded-xl" />
+                <Skeleton className="h-[220px] w-[250px] " />
               </div>
             ) : (
               <Image
@@ -49,7 +60,10 @@ export default function ProductCard({
           </div>
         </Link>
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
-          <Link href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}>
+          <Link 
+            href={`/product/${slug.toLowerCase().replace(/\s+/g, '-')}`}
+            onClick={handleProductClick}
+          >
             <Button
               size="sm"
               className="bg-[hsl(var(--bonik-blue))/90] hover:bg-[hsl(var(--bonik-blue))/90] text-white border-none shadow-none"
@@ -80,7 +94,7 @@ export default function ProductCard({
           {loading ? (
             <div className="space-x-1">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="w-4 h-4 rounded-full" />
+                <Skeleton key={i} className="w-4 h-4 " />
               ))}
             </div>
           ) : (

@@ -2,71 +2,182 @@
 
 import { useState, useEffect } from 'react';
 import { Product, fetchProducts } from '@/data/products';
+import { SubCategory, fetchSubCategories } from '@/data/subcategories';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
 
 export default function CategoryPage() {
+  const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const subcategoryParam = searchParams.get('subcategory');
   const categorySlug = params?.slug as string || '';
-  
+
   // State for filters
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 240000]);
   const [minRating, setMinRating] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const productsPerPage = 12;
 
-  // Loading state
-  const [loading, setLoading] = useState<boolean>(true);
+  // Loading states
+  const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
+  const [loadingSubcategories, setLoadingSubcategories] = useState<boolean>(true);
 
-  // Get products for this category
+  // Data states
   const [products, setProducts] = useState<Product[]>([]);
+  const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
 
   // Convert slug back to category name
   const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  
+
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
-        setLoading(true);
-        const data = await fetchProducts();
-        setProducts(data);
+        setLoadingProducts(true);
+        setLoadingSubcategories(true);
+
+        const [productsData, subcategoriesData] = await Promise.all([
+          fetchProducts(),
+          fetchSubCategories()
+        ]);
+
+        setProducts(productsData);
+        setSubcategories(subcategoriesData);
       } catch (error) {
-        console.error('Failed to load products:', error);
+        console.error('Failed to load data:', error);
       } finally {
-        setLoading(false);
+        setLoadingProducts(false);
+        setLoadingSubcategories(false);
       }
     };
-    loadProducts();
+    loadData();
   }, []);
-  
-  const categoryProducts = products.filter(product => 
-    product.category.toLowerCase() === categoryName.toLowerCase()
+
+  useEffect(() => {
+    if (subcategoryParam) {
+      setSelectedSubcategory(subcategoryParam);
+    } else {
+      setSelectedSubcategory(null);
+    }
+    setCurrentPage(1);
+  }, [subcategoryParam, categorySlug]);
+
+  useEffect(() => {
+    return () => {
+      setSelectedSubcategory(null);
+      setCurrentPage(1);
+    };
+  }, [categorySlug]);
+
+  // Add this function to expand the parent category when subcategory is selected
+  useEffect(() => {
+    if (subcategoryParam) {
+      // Find the parent category of the selected subcategory
+      const parentCategory = subcategories.find(
+        sub => sub.slug === subcategoryParam
+      )?.category;
+
+      if (parentCategory) {
+        // Expand the parent category
+        setExpandedCategories(prev => ({
+          ...prev,
+          [parentCategory]: true
+        }));
+      }
+    }
+  }, [subcategoryParam, subcategories]);
+
+  // Get subcategories for current category
+  const currentSubcategories = subcategories.filter(subcat =>
+    subcat.category.toLowerCase() === categoryName.toLowerCase()
   );
 
+  // Group subcategories by category
+  const subcategoriesByCategory = subcategories.reduce<Record<string, SubCategory[]>>((acc, subcat) => {
+    if (!acc[subcat.category]) {
+      acc[subcat.category] = [];
+    }
+    acc[subcat.category].push(subcat);
+    return acc;
+  }, {});
+
+  // Update the toggleCategoryExpansion function
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => {
+      const newState = {
+        ...prev,
+        [category]: !prev[category]
+      };
+      
+      // If we're collapsing and there's a selected subcategory in this category,
+      // prevent collapse
+      if (!newState[category] && selectedSubcategory) {
+        const relatedSubcat = subcategories.find(sub => sub.slug === selectedSubcategory);
+        if (relatedSubcat && relatedSubcat.category === category) {
+          newState[category] = true;
+        }
+      }
+      
+      return newState;
+    });
+  };
+
+  // Update the handleSubcategoryClick function
+  const handleSubcategoryClick = (subcat: SubCategory) => {
+    const newSubcategory = selectedSubcategory === subcat.slug ? null : subcat.slug;
+    const parentCategorySlug = subcat.category.toLowerCase().replace(/\s+/g, '-');
+    const baseUrl = `/category/${parentCategorySlug}`;
+    
+    if (newSubcategory) {
+      router.push(`${baseUrl}?subcategory=${newSubcategory}`);
+      // Expand the parent category
+      setExpandedCategories(prev => ({
+        ...prev,
+        [subcat.category]: true
+      }));
+    } else {
+      router.push(baseUrl);
+      // Optional: collapse the parent category when deselecting
+      setExpandedCategories(prev => ({
+        ...prev,
+        [subcat.category]: false
+      }));
+    }
+    
+    setSelectedSubcategory(newSubcategory);
+    setCurrentPage(1);
+  };
+
   // Filter products based on all criteria
-  const filteredProducts = categoryProducts.filter(product => {
-    // Ensure price is treated as a number
-    const price = typeof product.price === 'string' 
-      ? parseFloat(product.price.replace(/,/g, '')) 
-      : Number(product.price);
-    
-    // Check price range
-    const priceMatch = price >= priceRange[0] && price <= priceRange[1];
-    
+  const filteredProducts = products.filter(product => {
+    // Match category first
+    const categoryMatch = product.category.toLowerCase() === categoryName.toLowerCase();
+
+    // Match subcategory if selected
+    const subcategoryMatch = !selectedSubcategory || 
+      (product.subCategory && subcategories.some(subcat => 
+        subcat.slug === selectedSubcategory && 
+        subcat.title === product.subCategory
+      ));
+
     // Check rating filter
     const ratingMatch = product.rating >= minRating;
-    
+
     // Check search query
-    const searchMatch = searchQuery === '' || 
-                       product.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return priceMatch && ratingMatch && searchMatch;
+    const searchMatch = searchQuery === '' ||
+      product.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return categoryMatch && subcategoryMatch && ratingMatch && searchMatch;
   });
 
   // Pagination logic
@@ -83,7 +194,7 @@ export default function CategoryPage() {
   // Handle price range change
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const newValue = parseInt(e.target.value);
-    setPriceRange(prev => 
+    setPriceRange(prev =>
       index === 0 ? [newValue, prev[1]] : [prev[0], newValue]
     );
     setCurrentPage(1); // Reset to first page when filters change
@@ -184,7 +295,7 @@ export default function CategoryPage() {
     }
 
     return (
-      <motion.div 
+      <motion.div
         className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -192,9 +303,9 @@ export default function CategoryPage() {
         <p className="text-gray-600 text-sm">
           Showing {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} of {filteredProducts.length} products
         </p>
-        
+
         <div className="flex items-center gap-2">
-          <motion.button 
+          <motion.button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
@@ -203,12 +314,12 @@ export default function CategoryPage() {
           >
             Previous
           </motion.button>
-          
+
           <div className="flex gap-1">
             {pages}
           </div>
-          
-          <motion.button 
+
+          <motion.button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
@@ -225,27 +336,27 @@ export default function CategoryPage() {
   return (
     <>
       <Header />
-      
-      <motion.main 
+
+      <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="min-h-screen bg-[#f6f9fc]"
       >
         <div className="container-2 mx-auto px-4 py-8 sm:px-20 sm:py-10">
-          <motion.div 
+          <motion.div
             className="flex flex-col md:flex-row gap-8"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
           >
             {/* Sidebar Filters */}
-            <motion.div 
+            <motion.div
               className="w-full md:w-1/4 space-y-6"
               variants={itemVariants}
             >
               {/* Search Filter */}
-              <motion.div 
+              <motion.div
                 className="bg-white p-4 rounded-lg shadow"
                 whileHover={{ scale: 1.02 }}
               >
@@ -263,41 +374,92 @@ export default function CategoryPage() {
               </motion.div>
 
               {/* Categories Filter */}
-              <motion.div 
+              <motion.div
                 className="bg-white p-4 rounded-lg shadow"
                 whileHover={{ scale: 1.02 }}
               >
                 <h2 className="text-lg font-semibold mb-4">Categories</h2>
-                <ul className="space-y-2">
-                  {allCategories.map((category, catIdx) => (
-                    <motion.li 
-                      key={catIdx}
-                      whileHover={{ x: 5 }}
-                    >
-                      <Link 
-                        href={`/category/${category.toLowerCase().replace(/\s+/g, '-')}`}
-                        className={`block p-2 rounded ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-blue-100 font-medium' : 'hover:bg-gray-100'}`}
+                <ul className="space-y-2 ">
+                  {allCategories.map((category) => {
+                    const hasSubcategories = subcategoriesByCategory[category]?.length > 0;
+                    const isExpanded = expandedCategories[category] || false;
+
+                    return (
+                      <motion.li
+                        key={category}
+                        className="space-y-1 border-b border-gray-200 last:border-b-0"
                       >
-                        {category}
-                      </Link>
-                    </motion.li>
-                  ))}
+                        <div className="flex items-center justify-between ">
+                          <Link
+                            href={`/category/${category.toLowerCase().replace(/\s+/g, '-')}`}
+                            className={`block p-2 rounded flex-1 ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-white text-blue-500 font-medium' : 'hover:bg-gray-100'}`}
+                          >
+                            {category}
+                          </Link>
+
+                          {hasSubcategories && (
+                            <button
+                              onClick={() => toggleCategoryExpansion(category)}
+                              className="p-2 rounded hover:bg-gray-100"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {hasSubcategories && isExpanded && (
+                          <motion.ul
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="pl-4 space-y-1"
+                          >
+                            {subcategoriesByCategory[category]?.map((subcat: SubCategory) => (
+                              <motion.li
+                                key={subcat._id}
+                                whileHover={{ x: 5 }}
+                              >
+                                <div
+                                  className={`block p-2 rounded cursor-pointer ${
+                                    selectedSubcategory === subcat.slug ? 'bg-gray-100 hover:text-[hsl(var(--bonik-pink))] font-medium mb-2' : 'hover:bg-gray-100'
+                                  }`}
+                                  onClick={() => handleSubcategoryClick(subcat)}
+                                >
+                                  <span className="flex items-center gap-2 hover:text-[hsl(var(--bonik-pink))]">
+                                    {subcat.title}
+                                    {/* <span className="text-sm text-gray-500 ">
+                                      ({filteredProducts.filter(p => p.subCategory === subcat.title).length})
+                                    </span> */}
+                                  </span>
+                                </div>
+                              </motion.li>
+                            ))}
+                          </motion.ul>
+                        )}
+                      </motion.li>
+                    );
+                  })}
                 </ul>
               </motion.div>
 
               {/* Ratings Filter */}
-              <motion.div 
+              <motion.div
                 className="bg-white p-4 rounded-lg shadow"
                 whileHover={{ scale: 1.02 }}
               >
                 <h2 className="text-lg font-semibold mb-4">Ratings</h2>
                 <ul className="space-y-2">
                   {[4, 3, 2, 1, 0].map(rating => (
-                    <motion.li 
+                    <motion.li
                       key={rating}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <button 
+                      <button
                         onClick={() => {
                           setMinRating(rating);
                           setCurrentPage(1);
@@ -324,19 +486,19 @@ export default function CategoryPage() {
             </motion.div>
 
             {/* Main Content */}
-            <motion.div 
+            <motion.div
               className="w-full md:w-3/4"
               variants={itemVariants}
             >
               <div className="flex justify-between items-center mb-6">
-                <motion.h1 
+                <motion.h1
                   className="text-2xl font-bold"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                 >
                   {categoryName} Products
                 </motion.h1>
-                <motion.p 
+                <motion.p
                   className="text-gray-600"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -346,19 +508,19 @@ export default function CategoryPage() {
               </div>
 
               {/* Sorting Options */}
-              <motion.div 
+              <motion.div
                 className="flex flex-wrap gap-2 mb-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <motion.button 
+                <motion.button
                   className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   Best Selling
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -368,10 +530,10 @@ export default function CategoryPage() {
               </motion.div>
 
               {/* Product Grid */}
-              {loading ? (
+              {loadingProducts || loadingSubcategories ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {Array.from({ length: 12 }).map((_, index) => (
-                    <div key={index} className="bg-white rounded-lg shadow overflow-hidden">
+                    <div key={index} className="bg-white  shadow overflow-hidden">
                       <Skeleton className="aspect-square w-full" />
                       <div className="p-4 space-y-2">
                         <Skeleton className="h-4 w-3/4" />
@@ -381,19 +543,19 @@ export default function CategoryPage() {
                   ))}
                 </div>
               ) : currentProducts.length > 0 ? (
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                   layout
                 >
                   <AnimatePresence mode="wait">
                     {currentProducts.map((product) => (
-                      <motion.div 
+                      <motion.div
                         key={product._id}
                         layout
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ 
+                        transition={{
                           duration: 0.3,
                           layout: {
                             type: "spring",
@@ -402,7 +564,7 @@ export default function CategoryPage() {
                           }
                         }}
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                        className="bg-white rounded-lg shadow overflow-hidden"
+                        className="bg-white  shadow overflow-hidden"
                       >
                         {/* Your product card content remains the same */}
                         <Link href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -437,14 +599,14 @@ export default function CategoryPage() {
                   </AnimatePresence>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   className="bg-white rounded-lg shadow p-8 text-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
                   <h3 className="text-lg font-medium mb-2">No products found</h3>
                   <p className="text-gray-600 mb-4">Try adjusting your filters to see more results.</p>
-                  <motion.button 
+                  <motion.button
                     onClick={() => {
                       setPriceRange([0, 240000]);
                       setMinRating(0);

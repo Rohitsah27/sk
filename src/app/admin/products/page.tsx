@@ -1,14 +1,22 @@
 "use client";
 
 import { Category, fetchCategories } from '@/data/categories';
+import TextEditor from '@/app/TextEditor/page';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiSearch, FiX, FiUpload } from 'react-icons/fi';
+
+interface SubCategory {
+  _id: string;
+  title: string;
+  parentCategory: string;
+}
 
 interface Product {
   _id: string;
   title: string;
   image: string;
-  price?: string;
+  additionalImages?: string[];
+  price?: number;
   originalPrice?: string;
   rating: number;
   reviews: number;
@@ -18,6 +26,7 @@ interface Product {
   specifications?: string[];
   isBestSelling?: boolean;
   isFeatured?: boolean;
+  subCategory?: string;
 }
 
 export default function ProductsPage() {
@@ -25,9 +34,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [productFormData, setProductFormData] = useState<Partial<Product>>({
     title: '',
     image: '',
+    additionalImages: [],
     price: undefined,
     rating: 3,
     reviews: 0,
@@ -38,6 +49,7 @@ export default function ProductsPage() {
     isBestSelling: false,
     isFeatured: false
   });
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
   const [newSpecification, setNewSpecification] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +83,20 @@ export default function ProductsPage() {
       }
     };
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      try {
+        const response = await fetch('/api/subcategories');
+        if (!response.ok) throw new Error('Failed to fetch sub-categories');
+        const data = await response.json();
+        setSubCategories(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      }
+    };
+    loadSubCategories();
   }, []);
 
   const filteredProducts = products.filter(product =>
@@ -121,11 +147,58 @@ export default function ProductsPage() {
     }
   };
 
+  const handleAdditionalImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+      const newPreviews: string[] = [];
+
+      for (const file of Array.from(e.target.files)) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result as string);
+          setAdditionalImagePreviews([...additionalImagePreviews, ...newPreviews]);
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || 'Image upload failed');
+        uploadedUrls.push(data.imageUrl);
+      }
+
+      setProductFormData(prev => ({
+        ...prev,
+        additionalImages: [...(prev.additionalImages || []), ...uploadedUrls]
+      }));
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveAdditionalImage = (index: number) => {
+    setProductFormData(prev => ({
+      ...prev,
+      additionalImages: prev.additionalImages?.filter((_, i) => i !== index)
+    }));
+    setAdditionalImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleEditClick = async (product: Product) => {
     setEditingProduct(product);
     setProductFormData({
       ...product,
-      specifications: product.specifications || []
+      specifications: product.specifications || [],
+      additionalImages: product.additionalImages || []
     });
 
     if (product.image) {
@@ -143,8 +216,22 @@ export default function ProductsPage() {
         console.error('Error loading image:', err);
         setImagePreview('/placeholder-product.png');
       }
-    } else {
-      setImagePreview(null);
+    }
+
+    if (product.additionalImages?.length) {
+      const previews = await Promise.all(
+        product.additionalImages.map(async (imageUrl) => {
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+          } catch (err) {
+            console.error('Error loading additional image:', err);
+            return null;
+          }
+        })
+      );
+      setAdditionalImagePreviews(previews.filter(Boolean) as string[]);
     }
 
     setIsAddingProduct(false);
@@ -157,6 +244,7 @@ export default function ProductsPage() {
     setProductFormData({
       title: '',
       image: '',
+      additionalImages: [],
       price: undefined,
       rating: 3,
       reviews: 0,
@@ -186,28 +274,6 @@ export default function ProductsPage() {
     }));
   };
 
-  const handleAddBulletPoint = () => {
-    const textarea = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement | null;
-    if (textarea) {
-      const { selectionStart, selectionEnd } = textarea;
-      const value = textarea.value;
-      const beforeCursor = value.substring(0, selectionStart);
-      const afterCursor = value.substring(selectionEnd);
-
-      const updatedDescription = `${beforeCursor}• ${afterCursor}`;
-      setProductFormData(prev => ({
-        ...prev,
-        description: updatedDescription
-      }));
-
-      // Update cursor position after the bullet point
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
-        textarea.focus();
-      }, 0);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -218,11 +284,17 @@ export default function ProductsPage() {
         return;
       }
 
+      // Make sure description is included in the request body
+      const dataToSend = {
+        ...productFormData,
+        description: productFormData.description || ''  // Ensure description is included
+      };
+
       const method = isAddingProduct ? 'POST' : 'PUT';
       const response = await fetch('/api/products', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productFormData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -242,6 +314,7 @@ export default function ProductsPage() {
       setProductFormData({
         title: '',
         image: '',
+        additionalImages: [],
         price: undefined,
         rating: 3,
         reviews: 0,
@@ -280,6 +353,7 @@ export default function ProductsPage() {
     setProductFormData({
       title: '',
       image: '',
+      additionalImages: [],
       price: undefined,
       rating: 3,
       reviews: 0,
@@ -291,6 +365,7 @@ export default function ProductsPage() {
       isFeatured: false
     });
     setImagePreview(null);
+    setAdditionalImagePreviews([]);
   };
 
   if (isLoading) return (
@@ -359,32 +434,32 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
-  <input
-    type="text"
-    name="slug"
-    value={productFormData.slug || ''}
-    onChange={(e) => {
-      const capitalizeWords = (str: string) => {
-        return str
-          .toLowerCase()
-          .replace(/\s+/g, ' ')
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-      };
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={productFormData.slug || ''}
+                    onChange={(e) => {
+                      const capitalizeWords = (str: string) => {
+                        return str
+                          .toLowerCase()
+                          .replace(/\s+/g, ' ')
+                          .split(' ')
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ');
+                      };
 
-      const formattedValue = capitalizeWords(e.target.value);
+                      const formattedValue = capitalizeWords(e.target.value);
 
-      setProductFormData(prev => ({
-        ...prev,
-        slug: formattedValue,
-      }));
-    }}
-    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-    required
-  />
-</div>
+                      setProductFormData(prev => ({
+                        ...prev,
+                        slug: formattedValue,
+                      }));
+                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
@@ -411,7 +486,6 @@ export default function ProductsPage() {
                       />
                       <label htmlFor="isFeatured" className="text-sm text-gray-700">Featured Product</label>
                     </div>
-
                   </div>
                 </div>
 
@@ -430,6 +504,25 @@ export default function ProductsPage() {
                         {category.title}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sub-Category</label>
+                  <select
+                    name="subCategory"
+                    value={productFormData.subCategory || ''}
+                    onChange={handleFormChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a sub-category (optional)</option>
+                    {subCategories
+                      .filter(sc => sc.parentCategory === productFormData.category)
+                      .map(subCat => (
+                        <option key={subCat._id} value={subCat.title}>
+                          {subCat.title}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -497,23 +590,49 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <button
-                      type="button"
-                      onClick={handleAddBulletPoint}
-                      className="text-sm text-blue-600 hover:text-blue-800 bg-slate-100 hover:bg-slate-200 py-1 px-2 rounded-lg transition-colors"
-                    >
-                      Add Bullet
-                    </button>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Images (Optional)</label>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    {(productFormData.additionalImages || []).map((image, index) => (
+                      <div key={index} className="relative w-32 h-32">
+                        <img
+                          src={additionalImagePreviews[index] || image}
+                          alt={`Additional ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAdditionalImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <FiX size={16} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <textarea
-                    name="description"
+                  <div>
+                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg inline-flex items-center transition-colors">
+                      <FiUpload className="mr-2" />
+                      {isUploading ? 'Uploading...' : 'Add More Images'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAdditionalImagesUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                        multiple
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <TextEditor
                     value={productFormData.description || ''}
-                    onChange={handleFormChange}
-                    rows={6}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter description"
+                    onChange={(html) => setProductFormData(prev => ({
+                      ...prev,
+                      description: html
+                    }))}
                   />
                 </div>
               </div>

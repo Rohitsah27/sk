@@ -9,6 +9,29 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product, fetchProducts } from "@/data/products";
+import { SubCategory, fetchSubCategories } from "@/data/subcategories";
+
+declare global {
+  interface Window {
+    google?: {
+      translate: {
+        TranslateElement: {
+          new (options: any, element: string): void;
+        };
+      };
+    };
+  }
+
+  interface Window {
+    googleTranslateElementInit?: () => void;
+  }
+}
+
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+}
 
 export default function Header() {
   const router = useRouter()
@@ -18,19 +41,97 @@ export default function Header() {
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const categoryRef = useRef<HTMLDivElement>(null)
-
   const [products, setProducts] = useState<Product[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>({
+    code: 'en',
+    name: 'English',
+    flag: 'https://flagcdn.com/w20/gb.png'
+  });
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
+  const languages: Language[] = [
+    { code: 'en', name: 'English', flag: 'https://flagcdn.com/w20/gb.png' },
+    { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w20/de.png' },
+    { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w20/es.png' },
+    { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w20/fr.png' },
+    { code: 'it', name: 'Italiano', flag: 'https://flagcdn.com/w20/it.png' },
+    { code: 'ja', name: '日本語', flag: 'https://flagcdn.com/w20/jp.png' },
+    { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w20/cn.png' },
+    {code: 'hi', name: 'हिन्दी', flag: 'https://flagcdn.com/w20/in.png' },
+  ];
+
+  // Initialize Google Translate
   useEffect(() => {
-    setIsClient(true) // Set client-side flag
-    const loadProducts = async () => {
-      const data = await fetchProducts();
-      setProducts(data);
+    setIsClient(true);
+    
+    const loadGoogleTranslate = () => {
+      if (window.google?.translate) {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: 'en',
+            includedLanguages: 'en,de,es,fr,it,ja,zh,hi',
+            // Removed invalid 'layout' property
+            autoDisplay: false
+          },
+          'google_translate_element'
+        );
+      }
     };
-    loadProducts();
+
+    if (!document.getElementById('google-translate-script')) {
+      const script = document.createElement('script');
+      script.id = 'google-translate-script';
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+      
+      window.googleTranslateElementInit = loadGoogleTranslate;
+    }
+
+    return () => {
+      const script = document.getElementById('google-translate-script');
+      if (script) document.body.removeChild(script);
+      delete window.googleTranslateElementInit;
+    };
   }, []);
+
+  // Load products and categories
+  useEffect(() => {
+    const loadData = async () => {
+      const [productsData, subCategoriesData] = await Promise.all([
+        fetchProducts(),
+        fetchSubCategories()
+      ]);
+      setProducts(productsData);
+      setSubCategories(subCategoriesData);
+    };
+    loadData();
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (languageCode: string) => {
+    const newLanguage = languages.find(lang => lang.code === languageCode);
+    if (newLanguage) {
+      setSelectedLanguage(newLanguage);
+    }
+    setShowLanguageMenu(false);
+    
+    // Change Google Translate language
+    const changeLanguage = () => {
+      const googleFrame = document.querySelector<HTMLSelectElement>('.goog-te-combo');
+      if (googleFrame) {
+        googleFrame.value = languageCode;
+        googleFrame.dispatchEvent(new Event('change'));
+      } else {
+        setTimeout(changeLanguage, 100);
+      }
+    };
+    changeLanguage();
+  };
 
   // Animation variants
   const containerVariants = {
@@ -80,13 +181,17 @@ export default function Header() {
       slug: category.toLowerCase().replace(/\s+/g, '-')
     }));
 
-  // Add "All Products" option at the beginning of categories
-  const allCategories = [
-    { name: 'All Products', slug: 'all' },
-    ...categories
-  ];
+  // Get subcategories for a category
+  const getSubCategories = (categoryName: string) => {
+    return subCategories
+      .filter(subCat => subCat.category === categoryName)
+      .map(subCat => ({
+        name: subCat.title,
+        slug: subCat.slug
+      }));
+  };
 
-  // Handle search input changes
+  // Handle search input
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
     setSearchQuery(query)
@@ -123,6 +228,7 @@ export default function Header() {
       }
       if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
         setIsCategoryOpen(false)
+        setHoveredCategory(null)
       }
     }
 
@@ -139,18 +245,26 @@ export default function Header() {
     setShowResults(false)
   }
 
-  // Handle category selection
-  const handleCategoryClick = (slug: string) => {
+  // Handle category navigation
+  const handleCategoryClick = (slug: string, categoryName?: string) => {
     setIsCategoryOpen(false);
-    if (slug === 'all') {
-      router.push('/products');
+    setHoveredCategory(null);
+    
+    if (categoryName) {
+      // Handle subcategory click
+      router.push(`/category/${categoryName.toLowerCase().replace(/\s+/g, '-')}?subcategory=${slug}`);
     } else {
+      // Handle main category click
       router.push(`/category/${slug}`);
     }
   };
 
   return (
     <header className="w-full">
+      {/* Hidden Google Translate elements */}
+      <div className='VIpgJd-ZVi9od-ORHb hidden'></div>
+      <div id="google_translate_element" style={{ display: 'none' }}></div>
+
       {/* Top Navigation */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -185,12 +299,55 @@ export default function Header() {
             <motion.div variants={itemVariants}>
               <Link href="/contact-us" className="hover:underline hidden sm:inline">Need Help?</Link>
             </motion.div>
-            <motion.div variants={itemVariants} className="flex items-center gap-1">
-              <span className="flex items-center gap-1">
-                <img src="https://ext.same-assets.com/4117257200/1555852028.png" alt="USA" className="w-4 h-4" />
-                <span>EN</span>
-              </span>
-              <ChevronDown size={16} />
+            <motion.div variants={itemVariants} className="relative">
+              <button
+                className="flex items-center gap-1 hover:bg-[hsla(0,0%,100%,.1)] px-2 py-1 rounded-md"
+                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+              >
+                <img 
+                  src={selectedLanguage.flag} 
+                  alt={selectedLanguage.name} 
+                  className="w-4 h-4 object-cover rounded-sm" 
+                />
+                <span>{selectedLanguage.name}</span>
+                <ChevronDown size={16} />
+              </button>
+
+              {/* Language Dropdown */}
+              <AnimatePresence>
+                {showLanguageMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50"
+                  >
+                    <ul className="py-1">
+                      {languages.map((language) => (
+                        <motion.li
+                          key={language.code}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <button
+                            className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-gray-100
+                              ${selectedLanguage.code === language.code ? 'bg-gray-50' : ''}`}
+                            onClick={() => handleLanguageChange(language.code)}
+                          >
+                            <img 
+                              src={language.flag} 
+                              alt={language.name} 
+                              className="w-4 h-4 object-cover rounded-sm" 
+                            />
+                            <span className="text-gray-700">{language.name}</span>
+                          </button>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         </div>
@@ -204,7 +361,7 @@ export default function Header() {
         className="py-4 border-b"
       >
         <div className="container-custom flex items-center md:justify-center justify-between md:gap-52">
-          {/* Logo - Hidden on mobile when search is active */}
+          {/* Logo */}
           <AnimatePresence>
             {(!showMobileSearch || (isClient && window.innerWidth >= 768)) && (
               <motion.div
@@ -220,7 +377,7 @@ export default function Header() {
             )}
           </AnimatePresence>
 
-          {/* Mobile Search Button - Only visible on mobile */}
+          {/* Mobile Search Button */}
           <div className="md:hidden">
             <Button
               variant="ghost"
@@ -232,7 +389,7 @@ export default function Header() {
             </Button>
           </div>
 
-          {/* Search - Hidden on mobile unless activated */}
+          {/* Search Bar */}
           <AnimatePresence>
             {(showMobileSearch || (isClient && window.innerWidth >= 768)) && (
               <motion.div
@@ -269,7 +426,7 @@ export default function Header() {
                   </Button>
                 </form>
 
-                {/* Search results dropdown */}
+                {/* Search Results */}
                 <AnimatePresence>
                   {showResults && searchResults.length > 0 && (
                     <motion.div
@@ -301,8 +458,8 @@ export default function Header() {
                               <Image
                                 src={product.image}
                                 alt={product.title}
-                                width={40}
-                                height={40}
+                                width={60}
+                                height={60}
                                 className="w-10 h-10 object-contain mr-3"
                               />
                               <div>
@@ -335,7 +492,11 @@ export default function Header() {
             ref={categoryRef}
             className="relative group"
             onMouseEnter={() => setIsCategoryOpen(true)}
-            onMouseLeave={() => setIsCategoryOpen(false)}
+            onMouseLeave={() => {
+              if (!hoveredCategory) {
+                setIsCategoryOpen(false)
+              }
+            }}
           >
             <button
               className="flex items-center gap-2 px-6 py-3 bg-red-700 hover:bg-red-800 transition-colors h-full"
@@ -345,7 +506,7 @@ export default function Header() {
               <ChevronDown size={16} />
             </button>
 
-            {/* Categories Dropdown Menu */}
+            {/* Categories Menu */}
             <AnimatePresence>
               {isCategoryOpen && (
                 <motion.div
@@ -354,25 +515,66 @@ export default function Header() {
                   animate="visible"
                   exit="hidden"
                   variants={dropdownVariants}
+                  onMouseLeave={() => {
+                    setIsCategoryOpen(false)
+                    setHoveredCategory(null)
+                  }}
                 >
-                  <ul className="py-1">
-                    {allCategories.map((category, ctIdx) => (
-                      <motion.li
-                        key={ctIdx}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: ctIdx * 0.05 }}
-                      >
-                        <button
-                          onClick={() => handleCategoryClick(category.slug)}
-                          className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 text-left"
+                  <div className="relative flex">
+                    <ul className="py-1 w-full">
+                      {categories.map((category, ctIdx) => (
+                        <motion.li
+                          key={ctIdx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: ctIdx * 0.05 }}
+                          className="relative"
                         >
-                          <span>{category.name}</span>
-                          {category.slug !== 'all' && <ChevronRight size={16} className="text-gray-400" />}
-                        </button>
-                      </motion.li>
-                    ))}
-                  </ul>
+                          <button
+                            onClick={() => handleCategoryClick(category.slug)}
+                            className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 hover:text-[hsl(var(--bonik-pink))] text-left border-b border-gray-200 "
+                            onMouseEnter={() => {
+                              setHoveredCategory(category.name)
+                            }}
+                          >
+                            <span>{category.name}</span>
+                            <ChevronRight size={16} className="text-gray-400" />
+                          </button>
+
+                          {/* Subcategories */}
+                          {hoveredCategory === category.name && getSubCategories(category.name).length > 0 && (
+                            <motion.div
+                              className="absolute left-full top-0 w-56 bg-white shadow-lg ml-1 rounded-r-md"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                            >
+                              <div className="p-2">
+                                {/* <h3 className="px-4 py-2 font-medium text-gray-700">Subcategories</h3> */}
+                                <ul className="py-1">
+                                  {getSubCategories(category.name).map((subCat, idx) => (
+                                    <motion.li
+                                      key={idx}
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: idx * 0.05 }}
+                                    >
+                                      <button
+                                        onClick={() => handleCategoryClick(subCat.slug, category.name)}
+                                        className="w-full px-4 py-2 text-left hover:text-[hsl(var(--bonik-pink))] hover:bg-gray-100 rounded-md"
+                                      >
+                                        {subCat.name}
+                                      </button>
+                                    </motion.li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </motion.div>
+                          )}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -380,21 +582,18 @@ export default function Header() {
 
           <nav className="flex-1 ms-5">
             <ul className="flex items-center gap-8 py-3">
-              <li className="bonik-nav-link text-white hover:text-white">
+              <li className="bonik-nav-link text-white hover:text-white hover:scale-105 transition-transform">
                 <Link href="/">Home</Link>
               </li>
-              <li className="bonik-nav-link text-white hover:text-white">
-                <Link href="/products">All Products</Link>
-              </li>
-              <li className="bonik-nav-link text-white hover:text-white">
+              
+              <li className="bonik-nav-link text-white hover:text-white hover:scale-105 transition-transform">
                 <Link href="/about-us">About Us</Link>
               </li>
-              <li className="bonik-nav-link text-white hover:text-white">
+              <li className="bonik-nav-link text-white hover:text-white hover:scale-105 transition-transform">
                 <Link href="/contact-us">Contact Us</Link>
               </li>
             </ul>
           </nav>
-
         </div>
       </motion.div>
     </header>
