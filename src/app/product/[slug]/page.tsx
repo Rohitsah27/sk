@@ -11,21 +11,16 @@ import ZoomableImage from '@/components/product/ZoomableImage';
 import ProductLoading from './loading';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 
+// Add this before the ProductDetailPage component
 export async function generateStaticParams() {
-  try {
-    const products = await fetchProducts();
-    
-    return products.map((product) => ({
-      slug: product.title
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-    }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
+  const products = await fetchProducts();
+  
+  return products.map((product) => ({
+    slug: product.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+  }));
 }
 
 interface ProductDetailPageProps {
@@ -36,37 +31,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   try {
     const { slug } = params;
     
-    // More robust slug normalization
+    // Normalize the slug
     const normalizedSlug = decodeURIComponent(slug)
       .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')  // Replace spaces with hyphens
-      .replace(/[^a-z0-9-]/g, ''); // Remove special characters
+      .replace(/-/g, ' ');
     
-    // Add error boundary for product fetch
-    let product;
-    try {
-      product = await getProductBySlug(normalizedSlug);
-    } catch (fetchError) {
-      console.error('Error fetching product:', fetchError);
-      return {
-        notFound: true
-      };
-    }
+    const product = await getProductBySlug(normalizedSlug);
 
     if (!product) {
-      console.log(`Product not found for slug: ${normalizedSlug}`);
       return notFound();
     }
 
-    // Add error boundary for related products
-    let relatedProducts = [];
-    try {
-      relatedProducts = await fetchProducts();
-    } catch (fetchError) {
-      console.error('Error fetching related products:', fetchError);
-      relatedProducts = [];
-    }
+    const relatedProducts = await fetchProducts();
 
     const allImages = [product.image, ...(product.additionalImages || [])];
 
@@ -200,42 +176,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       </Layout>
     );
   } catch (error) {
-    console.error('Error in ProductDetailPage:', error);
-    return (
-      <Layout>
-        <div className="container-custom py-10">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Something went wrong
-            </h1>
-            <p className="text-gray-600">
-              We're having trouble loading this product. Please try again later.
-            </p>
-          </div>
-        </div>
-      </Layout>
-    );
+    console.error('Error loading product:', error);
+    throw new Error('Failed to load product details');
   }
 }
 
-export async function generateMetadata({ params }: ProductDetailPageProps) {
-  try {
-    const { slug } = params;
-    const product = await getProductBySlug(slug);
-    
-    if (!product) {
-      return {
-        title: 'Product Not Found',
-      };
-    }
-
-    return {
-      title: product.title,
-      description: product.description?.substring(0, 155) || undefined,
-    };
-  } catch (error) {
-    return {
-      title: 'Product Details',
-    };
-  }
+// Add error boundary
+export function generateMetadata({ params }: ProductDetailPageProps) {
+  return {
+    title: `Product ${params.slug}`,
+  };
 }

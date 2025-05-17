@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Product, fetchProducts } from '@/data/products';
-import { SubCategory, fetchSubCategories } from '@/data/subcategories';
+import { fetchSubCategories } from '@/data/subcategories';
+import { fetchCategories } from '@/data/categories';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
@@ -12,6 +13,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+interface Category {
+  _id: string;
+  title: string;
+  image: string;
+}
+
+interface SubCategory {
+  _id: string;
+  title: string;
+  category: string;
+  slug: string;
+}
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -32,155 +45,113 @@ export default function CategoryPage() {
   // Loading states
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [loadingSubcategories, setLoadingSubcategories] = useState<boolean>(true);
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
 
   // Data states
   const [products, setProducts] = useState<Product[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Convert slug back to category name
-  const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  // Decode category name from slug
+  const categoryName = decodeURIComponent(categorySlug).replace(/-/g, ' ');
 
+  // Group subcategories by category
+  const subcategoriesByCategory = useMemo(() => {
+    return subcategories.reduce<Record<string, SubCategory[]>>((acc, subcat) => {
+      if (!acc[subcat.category]) {
+        acc[subcat.category] = [];
+      }
+      acc[subcat.category].push(subcat);
+      return acc;
+    }, {});
+  }, [subcategories]);
+
+  // Add this helper function
+  const isSubcategorySelected = (subcategorySlug: string) => {
+    return selectedSubcategory === subcategorySlug || 
+      subcategoryParam === subcategorySlug;
+  };
+
+  // Load data
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoadingProducts(true);
+        setLoadingCategories(true);
         setLoadingSubcategories(true);
 
-        const [productsData, subcategoriesData] = await Promise.all([
+        const [productsData, categoriesData, subcategoriesData] = await Promise.all([
           fetchProducts(),
+          fetchCategories(),
           fetchSubCategories()
         ]);
 
         setProducts(productsData);
+        setCategories(categoriesData);
         setSubcategories(subcategoriesData);
+
+        // Handle subcategory from URL
+        if (subcategoryParam) {
+          const subcategory = subcategoriesData.find(sub => sub.slug === subcategoryParam);
+          if (subcategory) {
+            // Set selected subcategory
+            setSelectedSubcategory(subcategoryParam);
+            // Expand parent category
+            setExpandedCategories(prev => ({
+              ...prev,
+              [subcategory.category]: true
+            }));
+          }
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
         setLoadingProducts(false);
+        setLoadingCategories(false);
         setLoadingSubcategories(false);
       }
     };
+    
     loadData();
-  }, []);
+  }, [categorySlug, subcategoryParam]);
 
+  // Sync subcategory selection with URL
   useEffect(() => {
     if (subcategoryParam) {
       setSelectedSubcategory(subcategoryParam);
     } else {
       setSelectedSubcategory(null);
     }
-    setCurrentPage(1);
-  }, [subcategoryParam, categorySlug]);
+  }, [subcategoryParam]);
 
-  useEffect(() => {
-    return () => {
-      setSelectedSubcategory(null);
-      setCurrentPage(1);
-    };
-  }, [categorySlug]);
-
-  // Add this function to expand the parent category when subcategory is selected
-  useEffect(() => {
-    if (subcategoryParam) {
-      // Find the parent category of the selected subcategory
-      const parentCategory = subcategories.find(
-        sub => sub.slug === subcategoryParam
-      )?.category;
-
-      if (parentCategory) {
-        // Expand the parent category
-        setExpandedCategories(prev => ({
-          ...prev,
-          [parentCategory]: true
-        }));
-      }
-    }
-  }, [subcategoryParam, subcategories]);
-
-  // Get subcategories for current category
-  const currentSubcategories = subcategories.filter(subcat =>
-    subcat.category.toLowerCase() === categoryName.toLowerCase()
-  );
-
-  // Group subcategories by category
-  const subcategoriesByCategory = subcategories.reduce<Record<string, SubCategory[]>>((acc, subcat) => {
-    if (!acc[subcat.category]) {
-      acc[subcat.category] = [];
-    }
-    acc[subcat.category].push(subcat);
-    return acc;
-  }, {});
-
-  // Update the toggleCategoryExpansion function
-  const toggleCategoryExpansion = (category: string) => {
-    setExpandedCategories(prev => {
-      const newState = {
-        ...prev,
-        [category]: !prev[category]
-      };
+  // Filter products
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Normalize category names for comparison
+      const productCategoryNormalized = product.category.toLowerCase().trim();
+      const currentCategoryNormalized = categoryName.toLowerCase().trim();
       
-      // If we're collapsing and there's a selected subcategory in this category,
-      // prevent collapse
-      if (!newState[category] && selectedSubcategory) {
-        const relatedSubcat = subcategories.find(sub => sub.slug === selectedSubcategory);
-        if (relatedSubcat && relatedSubcat.category === category) {
-          newState[category] = true;
-        }
-      }
+      // Match parent category
+      const categoryMatch = productCategoryNormalized === currentCategoryNormalized;
       
-      return newState;
+      // Match subcategory if selected
+      const subcategoryMatch = selectedSubcategory 
+        ? (product.subCategory && subcategories.some(subcat => 
+            subcat.slug === selectedSubcategory && 
+            subcat.title.toLowerCase() === product.subCategory.toLowerCase()
+          ))
+        : true;
+      
+      // Other filters
+      const ratingMatch = product.rating >= minRating;
+      const searchMatch = searchQuery === '' ||
+        product.title.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return categoryMatch && subcategoryMatch && ratingMatch && searchMatch;
     });
-  };
+  }, [products, categoryName, selectedSubcategory, minRating, searchQuery, subcategories]);
 
-  // Update the handleSubcategoryClick function
-  const handleSubcategoryClick = (subcat: SubCategory) => {
-    const newSubcategory = selectedSubcategory === subcat.slug ? null : subcat.slug;
-    const parentCategorySlug = subcat.category.toLowerCase().replace(/\s+/g, '-');
-    const baseUrl = `/category/${parentCategorySlug}`;
-    
-    if (newSubcategory) {
-      router.push(`${baseUrl}?subcategory=${newSubcategory}`);
-      // Expand the parent category
-      setExpandedCategories(prev => ({
-        ...prev,
-        [subcat.category]: true
-      }));
-    } else {
-      router.push(baseUrl);
-      // Optional: collapse the parent category when deselecting
-      setExpandedCategories(prev => ({
-        ...prev,
-        [subcat.category]: false
-      }));
-    }
-    
-    setSelectedSubcategory(newSubcategory);
-    setCurrentPage(1);
-  };
-
-  // Filter products based on all criteria
-  const filteredProducts = products.filter(product => {
-    // Match category first
-    const categoryMatch = product.category.toLowerCase() === categoryName.toLowerCase();
-
-    // Match subcategory if selected
-    const subcategoryMatch = !selectedSubcategory || 
-      (product.subCategory && subcategories.some(subcat => 
-        subcat.slug === selectedSubcategory && 
-        subcat.title === product.subCategory
-      ));
-
-    // Check rating filter
-    const ratingMatch = product.rating >= minRating;
-
-    // Check search query
-    const searchMatch = searchQuery === '' ||
-      product.title.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return categoryMatch && subcategoryMatch && ratingMatch && searchMatch;
-  });
-
-  // Pagination logic
+  // Pagination
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -191,38 +162,41 @@ export default function CategoryPage() {
     setCurrentPage(pageNumber);
   };
 
-  // Handle price range change
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const newValue = parseInt(e.target.value);
-    setPriceRange(prev =>
-      index === 0 ? [newValue, prev[1]] : [prev[0], newValue]
-    );
-    setCurrentPage(1); // Reset to first page when filters change
+  // Handle subcategory selection
+  const handleSubcategoryClick = (subcat: SubCategory) => {
+    const newSubcategory = selectedSubcategory === subcat.slug ? null : subcat.slug;
+    
+    // Update URL with subcategory
+    if (newSubcategory) {
+      router.push(
+        `/category/${categorySlug}?subcategory=${newSubcategory}`,
+        { shallow: true }
+      );
+    } else {
+      router.push(`/category/${categorySlug}`, { shallow: true });
+    }
+    
+    // Update state
+    setSelectedSubcategory(newSubcategory);
+    setExpandedCategories(prev => ({
+      ...prev,
+      [subcat.category]: true
+    }));
+    setCurrentPage(1);
   };
 
-  // Extract all unique categories from products
-  const allCategories = Array.from(new Set(products.map(product => product.category)));
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+  // Toggle category expansion
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5
-      }
-    }
+  // Handle category navigation
+  const handleCategoryClick = (categorySlug: string) => {
+    setSelectedSubcategory(null);
+    router.push(`/category/${categorySlug}`);
   };
 
   // Render pagination controls
@@ -234,7 +208,6 @@ export default function CategoryPage() {
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    // Adjust if we're at the beginning or end
     if (endPage - startPage + 1 < maxVisiblePages) {
       if (currentPage < totalPages / 2) {
         endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -243,7 +216,6 @@ export default function CategoryPage() {
       }
     }
 
-    // First page and ellipsis
     if (startPage > 1) {
       pages.push(
         <motion.button
@@ -261,7 +233,6 @@ export default function CategoryPage() {
       }
     }
 
-    // Page numbers
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <motion.button
@@ -276,7 +247,6 @@ export default function CategoryPage() {
       );
     }
 
-    // Last page and ellipsis
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         pages.push(<span key="end-ellipsis" className="px-2">...</span>);
@@ -348,12 +318,29 @@ export default function CategoryPage() {
             className="flex flex-col md:flex-row gap-8"
             initial="hidden"
             animate="visible"
-            variants={containerVariants}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
           >
             {/* Sidebar Filters */}
             <motion.div
               className="w-full md:w-1/4 space-y-6"
-              variants={itemVariants}
+              variants={{
+                hidden: { y: 20, opacity: 0 },
+                visible: {
+                  y: 0,
+                  opacity: 1,
+                  transition: {
+                    duration: 0.5
+                  }
+                }
+              }}
             >
               {/* Search Filter */}
               <motion.div
@@ -379,72 +366,106 @@ export default function CategoryPage() {
                 whileHover={{ scale: 1.02 }}
               >
                 <h2 className="text-lg font-semibold mb-4">Categories</h2>
-                <ul className="space-y-2 ">
-                  {allCategories.map((category) => {
-                    const hasSubcategories = subcategoriesByCategory[category]?.length > 0;
-                    const isExpanded = expandedCategories[category] || false;
+                {loadingCategories ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((_, index) => (
+                      <Skeleton key={index} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {categories.map((category) => {
+                      const hasSubcategories = subcategoriesByCategory[category.title]?.length > 0;
+                      const isExpanded = expandedCategories[category.title] || false;
+                      const isActive = categoryName.toLowerCase() === category.title.toLowerCase();
 
-                    return (
-                      <motion.li
-                        key={category}
-                        className="space-y-1 border-b border-gray-200 last:border-b-0"
-                      >
-                        <div className="flex items-center justify-between ">
-                          <Link
-                            href={`/category/${category.toLowerCase().replace(/\s+/g, '-')}`}
-                            className={`block p-2 rounded flex-1 ${categoryName.toLowerCase() === category.toLowerCase() ? 'bg-white text-blue-500 font-medium' : 'hover:bg-gray-100'}`}
-                          >
-                            {category}
-                          </Link>
-
-                          {hasSubcategories && (
-                            <button
-                              onClick={() => toggleCategoryExpansion(category)}
-                              className="p-2 rounded hover:bg-gray-100"
+                      return (
+                        <motion.li
+                          key={category._id}
+                          className="space-y-1 border-b border-gray-200 last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <Link
+                              href={`/category/${category.title.toLowerCase().replace(/\s+/g, '-')}`}
+                              className={`block p-2 rounded flex-1 ${
+                                isActive 
+                                  ? 'bg-blue-50 text-blue-600 font-medium border border-blue-200' 
+                                  : 'hover:bg-gray-100'
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleCategoryClick(category.title.toLowerCase().replace(/\s+/g, '-'));
+                              }}
                             >
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
-                        </div>
+                              <div className="flex items-center gap-2">
+                                {category.image && (
+                                  <Image
+                                    src={category.image}
+                                    alt={category.title}
+                                    width={24}
+                                    height={24}
+                                    className="object-contain"
+                                  />
+                                )}
+                                <span>{category.title}</span>
+                              </div>
+                            </Link>
 
-                        {hasSubcategories && isExpanded && (
-                          <motion.ul
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="pl-4 space-y-1"
-                          >
-                            {subcategoriesByCategory[category]?.map((subcat: SubCategory) => (
-                              <motion.li
-                                key={subcat._id}
-                                whileHover={{ x: 5 }}
+                            {hasSubcategories && (
+                              <button
+                                onClick={() => toggleCategoryExpansion(category.title)}
+                                className="p-2 rounded hover:bg-gray-100"
                               >
-                                <div
-                                  className={`block p-2 rounded cursor-pointer ${
-                                    selectedSubcategory === subcat.slug ? 'bg-gray-100 hover:text-[hsl(var(--bonik-pink))] font-medium mb-2' : 'hover:bg-gray-100'
-                                  }`}
-                                  onClick={() => handleSubcategoryClick(subcat)}
-                                >
-                                  <span className="flex items-center gap-2 hover:text-[hsl(var(--bonik-pink))]">
-                                    {subcat.title}
-                                    {/* <span className="text-sm text-gray-500 ">
-                                      ({filteredProducts.filter(p => p.subCategory === subcat.title).length})
-                                    </span> */}
-                                  </span>
-                                </div>
-                              </motion.li>
-                            ))}
-                          </motion.ul>
-                        )}
-                      </motion.li>
-                    );
-                  })}
-                </ul>
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          <AnimatePresence>
+                            {hasSubcategories && isExpanded && (
+                              <motion.ul
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="pl-4 space-y-1"
+                              >
+                                {subcategoriesByCategory[category.title]?.map((subcat) => (
+                                  <motion.li
+                                    key={subcat._id}
+                                    whileHover={{ x: 5 }}
+                                  >
+                                    <div
+                                      className={`block p-2 rounded cursor-pointer ${
+                                        isSubcategorySelected(subcat.slug)
+                                          ? 'bg-blue-100 text-blue-600 font-medium border border-blue-200' 
+                                          : 'hover:bg-gray-100'
+                                      }`}
+                                      onClick={() => handleSubcategoryClick(subcat)}
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        {subcat.title}
+                                        <span className="text-sm text-gray-500">
+                                          ({filteredProducts.filter(p => 
+                                            p.subCategory?.toLowerCase() === subcat.title.toLowerCase()
+                                          ).length})
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </motion.li>
+                                ))}
+                              </motion.ul>
+                            )}
+                          </AnimatePresence>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                )}
               </motion.div>
 
               {/* Ratings Filter */}
@@ -488,7 +509,16 @@ export default function CategoryPage() {
             {/* Main Content */}
             <motion.div
               className="w-full md:w-3/4"
-              variants={itemVariants}
+              variants={{
+                hidden: { y: 20, opacity: 0 },
+                visible: {
+                  y: 0,
+                  opacity: 1,
+                  transition: {
+                    duration: 0.5
+                  }
+                }
+              }}
             >
               <div className="flex justify-between items-center mb-6">
                 <motion.h1
@@ -496,7 +526,11 @@ export default function CategoryPage() {
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                 >
-                  {categoryName} Products
+                  {loadingProducts ? (
+                    <Skeleton className="h-8 w-48" />
+                  ) : (
+                    `${categoryName} ${selectedSubcategory ? '- ' + subcategories.find(s => s.slug === selectedSubcategory)?.title : ''}`
+                  )}
                 </motion.h1>
                 <motion.p
                   className="text-gray-600"
@@ -533,11 +567,12 @@ export default function CategoryPage() {
               {loadingProducts || loadingSubcategories ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {Array.from({ length: 12 }).map((_, index) => (
-                    <div key={index} className="bg-white  shadow overflow-hidden">
+                    <div key={index} className="bg-white rounded shadow overflow-hidden">
                       <Skeleton className="aspect-square w-full" />
                       <div className="p-4 space-y-2">
                         <Skeleton className="h-4 w-3/4" />
                         <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-3/4" />
                       </div>
                     </div>
                   ))}
@@ -564,9 +599,8 @@ export default function CategoryPage() {
                           }
                         }}
                         whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                        className="bg-white  shadow overflow-hidden"
+                        className="bg-white rounded shadow overflow-hidden"
                       >
-                        {/* Your product card content remains the same */}
                         <Link href={`/product/${product.slug.toLowerCase().replace(/\s+/g, '-')}`}>
                           <div className="relative aspect-square">
                             <Image

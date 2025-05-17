@@ -5,10 +5,11 @@ import { FiEdit, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import { fetchCategories } from '@/data/categories';
 
 interface SubCategory {
-  _id: string;
+   _id: string;
   title: string;
-  slug: string;
-  category: string;
+  parentCategory: string;  // Make sure this matches your API response
+  category: string;        // Add this if your API uses it
+  slug: string;   
 }
 
 interface Category {

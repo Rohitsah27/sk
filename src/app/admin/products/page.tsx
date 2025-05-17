@@ -8,7 +8,9 @@ import { FiEdit, FiTrash2, FiPlus, FiSearch, FiX, FiUpload } from 'react-icons/f
 interface SubCategory {
   _id: string;
   title: string;
-  parentCategory: string;
+  parentCategory: string;  // Make sure this matches your API response
+  category: string;        // Add this if your API uses it
+  slug: string;   
 }
 
 interface Product {
@@ -89,11 +91,16 @@ export default function ProductsPage() {
     const loadSubCategories = async () => {
       try {
         const response = await fetch('/api/subcategories');
-        if (!response.ok) throw new Error('Failed to fetch sub-categories');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch sub-categories');
+        }
         const data = await response.json();
+        console.log('Loaded subcategories:', data); // Debug log
         setSubCategories(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error('Error loading subcategories:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load subcategories');
       }
     };
     loadSubCategories();
@@ -107,7 +114,19 @@ export default function ProductsPage() {
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
 
-    if (type === 'checkbox') {
+    if (name === 'category') {
+      console.log('Category changed to:', value);
+      console.log('Available subcategories:', subCategories.filter(sc => 
+        sc.parentCategory === value || sc.category === value
+      ));
+      
+      // Reset subcategory when category changes
+      setProductFormData(prev => ({
+        ...prev,
+        [name]: value,
+        subCategory: '' // Reset subcategory
+      }));
+    } else if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setProductFormData(prev => ({ ...prev, [name]: checked }));
     } else {
@@ -517,13 +536,24 @@ export default function ProductsPage() {
                   >
                     <option value="">Select a sub-category (optional)</option>
                     {subCategories
-                      .filter(sc => sc.parentCategory === productFormData.category)
+                      .filter(subCat => 
+                        subCat.parentCategory === productFormData.category || 
+                        subCat.category === productFormData.category
+                      )
                       .map(subCat => (
                         <option key={subCat._id} value={subCat.title}>
                           {subCat.title}
                         </option>
                       ))}
                   </select>
+                  {productFormData.category && subCategories.filter(sc => 
+                    sc.parentCategory === productFormData.category || 
+                    sc.category === productFormData.category
+                  ).length === 0 && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      No sub-categories available for this category
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

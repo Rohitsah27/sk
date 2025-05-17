@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Product, fetchProducts } from "@/data/products";
 import { SubCategory, fetchSubCategories } from "@/data/subcategories";
+import { Category, fetchCategories } from "@/data/categories";
 
 declare global {
   interface Window {
@@ -46,6 +47,7 @@ export default function Header() {
   const categoryRef = useRef<HTMLDivElement>(null)
   const [products, setProducts] = useState<Product[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>({
     code: 'en',
     name: 'English',
@@ -102,12 +104,23 @@ export default function Header() {
   // Load products and categories
   useEffect(() => {
     const loadData = async () => {
-      const [productsData, subCategoriesData] = await Promise.all([
-        fetchProducts(),
-        fetchSubCategories()
-      ]);
-      setProducts(productsData);
-      setSubCategories(subCategoriesData);
+      try {
+        const [productsData, categoriesData, subCategoriesData] = await Promise.all([
+          fetchProducts(),
+          fetchCategories(),
+          fetchSubCategories()
+        ]);
+        
+        console.log('Fetched products:', productsData);
+        console.log('Fetched categories:', categoriesData);
+        console.log('Fetched subcategories:', subCategoriesData);
+        
+        setProducts(productsData);
+        setCategories(categoriesData);
+        setSubCategories(subCategoriesData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
     };
     loadData();
   }, []);
@@ -175,11 +188,12 @@ export default function Header() {
   }
 
   // Get unique categories from products
-  const categories = [...new Set(products.map(product => product.category))]
-    .map(category => ({
-      name: category,
-      slug: category.toLowerCase().replace(/\s+/g, '-')
-    }));
+  const mappedCategories = categories.map(category => ({
+    id: category._id,
+    name: category.title,
+    image: category.image,
+    slug: category.title.toLowerCase().replace(/\s+/g, '-')
+  }));
 
   // Get subcategories for a category
   const getSubCategories = (categoryName: string) => {
@@ -522,7 +536,7 @@ export default function Header() {
                 >
                   <div className="relative flex">
                     <ul className="py-1 w-full">
-                      {categories.map((category, ctIdx) => (
+                      {mappedCategories.map((category, ctIdx) => (
                         <motion.li
                           key={ctIdx}
                           initial={{ opacity: 0, x: -10 }}
