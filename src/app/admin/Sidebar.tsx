@@ -9,9 +9,8 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    // { href: '/admin', label: 'Dashboard', icon: '📊' },
+    
     { href: '/admin/products', label: 'Products', icon: '🛍️' },
-    // { href: '/admin/orders', label: 'Orders', icon: '📦' },
     { href: '/admin/categories', label: 'Categories', icon: '📦' },
     { href: '/admin/subcategories', label: 'Sub Categories', icon: '📂' },
   ];
@@ -30,8 +29,10 @@ export default function Sidebar() {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className={`flex items-center p-2 rounded-lg hover:bg-gray-700 ${
-                  pathname === item.href ? 'bg-gray-700' : ''
+                className={`flex items-center p-2 rounded-lg transition-colors ${
+                  pathname?.includes(item.href) 
+                    ? 'bg-gray-600 text-white' 
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
                 <span className="mr-3">{item.icon}</span>

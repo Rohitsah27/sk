@@ -58,6 +58,8 @@ export default function ProductsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -106,10 +108,16 @@ export default function ProductsPage() {
     loadSubCategories();
   }, []);
 
-  const filteredProducts = products.filter(product =>
-    (product.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (product.category?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  // Update the filteredProducts declaration
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = (product.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (product.category?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    const matchesSubCategory = !selectedSubCategory || product.subCategory === selectedSubCategory;
+
+    return matchesSearch && matchesCategory && matchesSubCategory;
+  });
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -728,9 +736,86 @@ export default function ProductsPage() {
           </form>
         </div>
       )}
+        
+      {/* Filter Section - Add this new section */}
+      <div className="mb-6 bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Category</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedSubCategory(''); // Reset sub-category when category changes
+              }}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                <option key={category._id} value={category.title}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Sub-Category</label>
+            <select
+              value={selectedSubCategory}
+              onChange={(e) => setSelectedSubCategory(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={!selectedCategory}
+            >
+              <option value="">All Sub-Categories</option>
+              {subCategories
+                .filter(subCat => 
+                  subCat.parentCategory === selectedCategory || 
+                  subCat.category === selectedCategory
+                )
+                .map(subCat => (
+                  <option key={subCat._id} value={subCat.title}>
+                    {subCat.title}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
+
+        {(selectedCategory || selectedSubCategory) && (
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">Active filters:</span>
+            {selectedCategory && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {selectedCategory}
+                <button
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setSelectedSubCategory('');
+                  }}
+                  className="ml-2 hover:text-blue-900"
+                >
+                  <FiX size={14} />
+                </button>
+              </span>
+            )}
+            {selectedSubCategory && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {selectedSubCategory}
+                <button
+                  onClick={() => setSelectedSubCategory('')}
+                  className="ml-2 hover:text-blue-900"
+                >
+                  <FiX size={14} />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -760,8 +845,15 @@ export default function ProductsPage() {
                       <div className="font-medium text-gray-900">{product.title}</div>
                       <div className="text-sm text-gray-500">{product.slug}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {product.category}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="text-gray-900">{product.category}</div>
+                      {product.subCategory && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {product.subCategory}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -800,7 +892,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                     No products found
                   </td>
                 </tr>

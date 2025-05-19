@@ -398,7 +398,7 @@ export default function CategoryPage() {
                               }}
                             >
                               <div className="flex items-center gap-2">
-                                {category.image && (
+                                {/* {category.image && (
                                   <Image
                                     src={category.image}
                                     alt={category.title}
@@ -406,7 +406,7 @@ export default function CategoryPage() {
                                     height={24}
                                     className="object-contain"
                                   />
-                                )}
+                                )} */}
                                 <span>{category.title}</span>
                               </div>
                             </Link>
@@ -442,7 +442,7 @@ export default function CategoryPage() {
                                     <div
                                       className={`block p-2 rounded cursor-pointer ${
                                         isSubcategorySelected(subcat.slug)
-                                          ? 'bg-blue-100 text-blue-600 font-medium border border-blue-200' 
+                                          ? 'bg-blue-50 text-blue-500 border border-blue-50' 
                                           : 'hover:bg-gray-100'
                                       }`}
                                       onClick={() => handleSubcategoryClick(subcat)}
@@ -465,6 +465,83 @@ export default function CategoryPage() {
                       );
                     })}
                   </ul>
+                )}
+              </motion.div>
+
+              {/* Latest Products Filter */}
+              <motion.div
+                className="bg-white p-4 rounded-lg shadow"
+                whileHover={{ scale: 1.02 }}
+              >
+                <h2 className="text-lg font-semibold mb-4">Latest Products</h2>
+                {loadingProducts ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((_, index) => (
+                      <Skeleton key={index} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {products
+                      .filter(product => product.category.toLowerCase() === categoryName.toLowerCase())
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .slice(0, 5)
+                      .map((product) => (
+                        <motion.div
+                          key={product._id}
+                          className="group cursor-pointer"
+                          whileHover={{ x: 5 }}
+                        >
+                          <Link 
+                            href={`/product/${product.slug}`}
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
+                          >
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                              <Image
+                                src={product.image}
+                                alt={product.title}
+                                fill
+                                className="object-cover group-hover:scale-110 transition-transform duration-300"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">
+                                {product.title}
+                              </h3>
+                              <div className="flex items-center mt-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <svg
+                                    key={i}
+                                    className={`w-3 h-3 ${
+                                      i < product.rating ? 'text-yellow-400' : 'text-gray-300'
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                ))}
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({product.reviews})
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+                  </div>
+                )}
+                
+                {products.filter(product => 
+                  product.category.toLowerCase() === categoryName.toLowerCase()
+                ).length > 3 && (
+                  <motion.button
+                    className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1"
+                    whileHover={{ x: 3 }}
+                  >
+                    View All Latest
+                    <ChevronRight className="w-4 h-4" />
+                  </motion.button>
                 )}
               </motion.div>
 
@@ -612,7 +689,7 @@ export default function CategoryPage() {
                             />
                           </div>
                           <div className="p-4">
-                            <h3 className="font-semibold text-lg mb-1">{product.title}</h3>
+                            <h3 className="font-semibold  mb-1 text-center">{product.title}</h3>
                             <div className="flex items-center mb-2">
                               {[...Array(5)].map((_, i) => (
                                 <svg
@@ -624,7 +701,7 @@ export default function CategoryPage() {
                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                               ))}
-                              <span className="text-gray-600 text-sm ml-1">({product.reviews})</span>
+                              <span className="text-gray-600 text-sm  ml-1">({product.reviews})</span>
                             </div>
                           </div>
                         </Link>

@@ -296,7 +296,7 @@ export default function Header() {
             <motion.div variants={itemVariants} className="flex items-center gap-2">
               <PhoneCall size={16} />
               <span>+919818900247</span>
-              <span className="hidden sm:inline">, +919818900247</span>
+              {/* <span className="hidden sm:inline">, +919818900247</span> */}
             </motion.div>
             <motion.div variants={itemVariants} className="hidden sm:flex items-center gap-2">
               <Mail size={16} />
@@ -546,7 +546,7 @@ export default function Header() {
                         >
                           <button
                             onClick={() => handleCategoryClick(category.slug)}
-                            className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 hover:text-[hsl(var(--bonik-pink))] text-left border-b border-gray-200 "
+                            className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 hover:text-blue-500 text-left border-b border-gray-200 "
                             onMouseEnter={() => {
                               setHoveredCategory(category.name)
                             }}
@@ -575,7 +575,7 @@ export default function Header() {
                                     >
                                       <button
                                         onClick={() => handleCategoryClick(subCat.slug, category.name)}
-                                        className="w-full px-4 py-2 text-left hover:text-[hsl(var(--bonik-pink))] hover:bg-gray-100 rounded-md"
+                                        className="w-full px-4 py-2 text-left hover:text-blue-500 hover:bg-gray-100 rounded-md"
                                       >
                                         {subCat.name}
                                       </button>

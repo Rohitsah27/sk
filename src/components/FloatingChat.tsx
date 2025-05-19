@@ -289,7 +289,7 @@ export default function FloatingChat() {
           box-shadow: 0 5px 25px rgba(0,0,0,0.15);
           display: flex;
           flex-direction: column;
-          z-index: 900;
+          z-index: 30;
           overflow: hidden;
           border: 1px solid #e0e0e0;
         }
@@ -430,7 +430,7 @@ export default function FloatingChat() {
           gap: 8px;
           cursor: pointer;
           box-shadow: 0 3px 15px rgba(0,0,0,0.2);
-          z-index: 999;
+          z-index: 30;
         }
         .inquiry-form {
           flex: 1;
