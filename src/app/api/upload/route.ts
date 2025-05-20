@@ -3,6 +3,16 @@ import cloudinary from '@/utils/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Cloudinary configuration
+    if (!cloudinary.config().api_key) {
+      cloudinary.config({
+        cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true
+      });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -24,14 +34,18 @@ export async function POST(request: NextRequest) {
       size: buffer.length 
     });
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary with error handling
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload(base64File, {
         folder: 'products',
         resource_type: 'auto',
       }, (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
+        if (error) {
+          console.error('Cloudinary upload error:', error);
+          reject(error);
+        } else {
+          resolve(result);
+        }
       });
     });
 
@@ -46,11 +60,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     // Log error details
-    console.error('Upload error:', error);
+    console.error('Upload error details:', error);
     
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Upload failed'
+      error: error instanceof Error ? error.message : 'Upload failed',
+      details: error
     }, { status: 500 });
   }
 }
