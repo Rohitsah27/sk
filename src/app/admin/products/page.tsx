@@ -145,6 +145,7 @@ export default function ProductsPage() {
     }
   };
 
+  // Update the handleImageUpload function
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -154,17 +155,36 @@ export default function ProductsPage() {
     setError(null);
 
     try {
+      // Create preview immediately
       const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
       reader.readAsDataURL(file);
 
+      // Prepare form data
       const formData = new FormData();
       formData.append('file', file);
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || 'Image upload failed');
-      setProductFormData(prev => ({ ...prev, image: data.imageUrl }));
+      // Upload image
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      console.log('Upload response:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      // Update form data with the new image URL
+      setProductFormData(prev => ({
+        ...prev,
+        image: data.imageUrl
+      }));
+
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Image upload failed');

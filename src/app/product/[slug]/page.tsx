@@ -182,7 +182,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 }
 
 // Add error boundary
-export function generateMetadata({ params }: ProductDetailPageProps) {
+export async function generateMetadata({ params }: ProductDetailPageProps) {
   return {
     title: `Product ${params.slug}`,
   };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import { CloudinaryUploadResponse } from '@/types/cloudinary';
 
 declare global {
   interface Window {
@@ -28,6 +29,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const [localImage, setLocalImage] = useState<string | null>(null);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -133,20 +135,43 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
     }, 10);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setLocalImage(imageUrl);
-        editorRef.current?.focus();
-        setTimeout(() => {
-          document.execCommand('insertHTML', false, 
-            `<img src="${imageUrl}" alt="Uploaded image" style="max-width:100%; height:auto;"/>`);
-        }, 10);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Upload to Cloudinary through your API route
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data: CloudinaryUploadResponse = await response.json();
+
+      if (!data.success || !data.imageUrl) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+
+      // Insert the Cloudinary URL into the editor
+      editorRef.current?.focus();
+      setTimeout(() => {
+        document.execCommand('insertHTML', false, 
+          `<img src="${data.imageUrl}" 
+            alt="Uploaded image" 
+            style="max-width:100%; height:auto;"
+            data-public-id="${data.publicId}"/>`);
+      }, 10);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      // You might want to show an error message to the user
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -155,10 +180,49 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
     fileInputRef.current?.click();
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = async (e: React.ClipboardEvent) => {
     e.preventDefault();
+
+    // Handle text content
     const text = e.clipboardData.getData('text/plain');
-    document.execCommand('insertText', false, text);
+    if (text) {
+      document.execCommand('insertText', false, text);
+      return;
+    }
+
+    // Handle image content
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find(item => item.type.startsWith('image'));
+    
+    if (imageItem) {
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data: CloudinaryUploadResponse = await response.json();
+
+        if (!data.success || !data.imageUrl) {
+          throw new Error(data.error || 'Failed to upload image');
+        }
+
+        document.execCommand('insertHTML', false, 
+          `<img src="${data.imageUrl}" 
+            alt="Pasted image" 
+            style="max-width:100%; height:auto;"
+            data-public-id="${data.publicId}"/>`);
+
+      } catch (error) {
+        console.error('Paste upload error:', error);
+      }
+    }
   };
 
   const focusEditor = () => {
@@ -438,12 +502,23 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={(e) => triggerFileInput(e)}
-            className="p-2 rounded bg-white hover:bg-gray-200"
+            className={`p-2 rounded ${
+              isUploading ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-200'
+            }`}
             title="Upload Image"
+            disabled={isUploading}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            {isUploading ? (
+              <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
           <input
             type="file"
@@ -451,6 +526,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
             onChange={handleFileUpload}
             accept="image/*"
             className="hidden"
+            disabled={isUploading}
           />
         </div>
       </div>

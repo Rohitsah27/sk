@@ -1,10 +1,16 @@
 // app/api/categories/route.js
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, GridFSBucket, ObjectId } from 'mongodb';
-import constants from 'node:constants';
+import { MongoClient, ObjectId } from 'mongodb';
+import cloudinary from '@/utils/cloudinary';
 
 const MOngoDBURI = "mongodb+srv://rohitkrsah27:rohitpk27@categories.ef3m4kr.mongodb.net/productDb?retryWrites=true&w=majority&appName=categories"
-// const uri = process.env.MONGODB_URI;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: 'rohitkrsah',
+  api_key: '254c2671f04a59c2b7854d82f7892d',
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const options = {
   maxPoolSize: 10,
@@ -15,7 +21,6 @@ const options = {
 
 async function connectDB() {
   const client = new MongoClient(MOngoDBURI, options);
-  console.log(client)
   await client.connect();
   return client;
 }   
@@ -148,7 +153,21 @@ export async function DELETE(request: NextRequest) {
 
     const objectId = new ObjectId(id);
     
-    // First delete the product
+    // First get the product to find its image
+    const product = await database.collection('categories').findOne({ _id: objectId });
+    
+    if (product && product.image) {
+      try {
+        // Extract public_id from Cloudinary URL
+        const publicId = product.image.match(/categories\/[^/]+/)?.[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      } catch (cloudinaryError) {
+        console.error('Error deleting image from Cloudinary:', cloudinaryError);
+      }
+    }
+
     const deleteResult = await database.collection('categories').deleteOne({ _id: objectId });
 
     if (deleteResult.deletedCount === 0) {
@@ -156,15 +175,6 @@ export async function DELETE(request: NextRequest) {
         { error: 'Product not found' },
         { status: 404 }
       );
-    }
-
-    // Then delete associated image from GridFS if it exists
-    const bucket = new GridFSBucket(database, { bucketName: 'productImages' });
-    const filesCollection = database.collection('productImages.files');
-    const fileExists = await filesCollection.findOne({ _id: objectId });
-    
-    if (fileExists) {
-      await bucket.delete(objectId);
     }
 
     return NextResponse.json({ success: true });

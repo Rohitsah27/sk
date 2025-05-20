@@ -1,6 +1,10 @@
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import Image from 'next/image';
+import Gst from '@/components/certificates/GST1-1.webp';
+import Iso from '@/components/certificates/ISO9001.webp';
+import Msme from '@/components/certificates/MSME-1.webp';
 
 const AboutUs = () => {
   return (
@@ -9,7 +13,7 @@ const AboutUs = () => {
       
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 pt-8">
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">About S K Equipments</h2>
           
@@ -117,10 +121,51 @@ const AboutUs = () => {
             Our team members are highly dedicated and put maximum effort to accomplish customer requirements on time. We conduct regular training sessions, seminars, and development programs to keep our team updated with the latest market trends.
           </p>
         </section>
-      </main>
 
-      {/* Footer */}
+        <section className="my-12">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">Our Certifications</h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center">
+              <div className="relative w-full h-[500px] mb-4 bottom">
+                <Image
+                  src={Gst}
+                  alt="GST Certificate"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-700">GST Registration</h4>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="relative w-full h-[500px] mb-4 bottom ">
+                <Image
+                  src={Iso}
+                  alt="ISO 9001 Certificate"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-700">ISO 9001 Certified</h4>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="relative w-full h-[500px] mb-4 bottom">
+                <Image
+                  src={Msme}
+                  alt="MSME Certificate"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-700">MSME Registration</h4>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
         <Footer />
+      </main>
     </div>
   );
 };

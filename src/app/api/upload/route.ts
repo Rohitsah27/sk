@@ -1,82 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, GridFSBucket } from 'mongodb';
-
-const uri = process.env.MONGODB_URI as string;
+import cloudinary from '@/utils/cloudinary';
 
 export async function POST(request: NextRequest) {
-  let client;
-
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      return NextResponse.json({ 
+        success: false, 
+        error: 'No file uploaded' 
+      }, { status: 400 });
     }
 
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Only JPEG, PNG, and WEBP images are allowed' },
-        { status: 400 }
-      );
-    }
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64File = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uniqueFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
-
-    client = new MongoClient(uri);
-    await client.connect();
-    const database = client.db();
-    const bucket = new GridFSBucket(database, { bucketName: 'productImages' });
-
-    const uploadStream = bucket.openUploadStream(uniqueFileName, {
-      contentType: file.type,
-      metadata: {
-        originalName: file.name,
-        size: file.size,
-        uploadedAt: new Date()
-      }
+    // Log upload attempt
+    console.log('Attempting to upload file:', { 
+      type: file.type, 
+      size: buffer.length 
     });
 
-    const fileId = await new Promise((resolve, reject) => {
-      // Write the buffer to the stream
-      uploadStream.write(buffer, (writeError) => {
-        if (writeError) {
-          reject(writeError);
-          return;
-        }
-        
-        // End the stream after successful write
-        uploadStream.end(() => {
-          resolve(uploadStream.id.toString());
-        });
-      });
-
-      // Handle stream errors
-      uploadStream.on('error', (streamError) => {
-        reject(streamError);
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload(base64File, {
+        folder: 'products',
+        resource_type: 'auto',
+      }, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
       });
     });
+
+    // Log success
+    console.log('Upload successful:', result);
 
     return NextResponse.json({
       success: true,
-      fileId,
-      imageUrl: `/api/images/${fileId}`
+      imageUrl: result.secure_url,
+      publicId: result.public_id
     });
 
   } catch (error) {
+    // Log error details
     console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
-  } finally {
-    if (client) {
-      await client.close().catch(console.error);
-    }
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed'
+    }, { status: 500 });
   }
 }
 
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 };

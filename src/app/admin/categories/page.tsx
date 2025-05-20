@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiSearch, FiX, FiUpload } from 'react-icons/fi';
+import { CloudinaryUploadResponse } from '@/types/cloudinary';
 
 interface Product {
   _id: string;
   title: string;
   image: string;
-  // price: string;
-  // originalPrice?: string;
-  // rating: number;
-  // reviews: number;
   category: string;
-  // slug: string;
-  // description?: string;
-  // specifications?: string[];
 }
 
 export default function ProductsPage() {
@@ -75,7 +69,6 @@ export default function ProductsPage() {
   // Handle image upload
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    
     const file = e.target.files[0];
     if (!file) return;
 
@@ -83,32 +76,31 @@ export default function ProductsPage() {
     setError(null);
 
     try {
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // Upload to MongoDB
+      // Create FormData
       const formData = new FormData();
       formData.append('file', file);
 
+      // Upload to Cloudinary through your API route
       const response = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Image upload failed');
+      if (!data.success || !data.imageUrl) {
+        throw new Error(data.error || 'Failed to upload image');
       }
 
+      // Update form data with Cloudinary URL
       setProductFormData(prev => ({
         ...prev,
-        image: data.imageUrl, // This should be the URL to the image endpoint
+        image: data.imageUrl
       }));
+
+      // Set preview
+      setImagePreview(data.imageUrl);
+
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Image upload failed');
@@ -121,26 +113,14 @@ export default function ProductsPage() {
   // Fixed handleEditClick function
   const handleEditClick = async (product: Product) => {
     setEditingProduct(product);
-    setProductFormData({ ...product });
+    setProductFormData({
+      ...product,
+      image: product.image || '' // Ensure image is always a string
+    });
     
-    // Set image preview for editing
+    // Set preview for Cloudinary image
     if (product.image) {
-      try {
-        // If it's already a data URL (from preview), use it directly
-        if (product.image.startsWith('data:')) {
-          setImagePreview(product.image);
-        } else {
-          // Otherwise, fetch the image from MongoDB
-          const response = await fetch(product.image);
-          if (response.ok) {
-            const blob = await response.blob();
-            setImagePreview(URL.createObjectURL(blob));
-          }
-        }
-      } catch (err) {
-        console.error('Error loading image:', err);
-        setImagePreview('/placeholder-product.png');
-      }
+      setImagePreview(product.image);
     } else {
       setImagePreview(null);
     }
@@ -196,8 +176,9 @@ export default function ProductsPage() {
       }
 
       const method = isAddingProduct ? 'POST' : 'PUT';
-      const url = '/api/categories' 
+      const url = '/api/categories';
 
+      // Send the Cloudinary URL in the request
       const response = await fetch(url, {
         method,
         headers: {
@@ -205,18 +186,18 @@ export default function ProductsPage() {
         },
         body: JSON.stringify({
           ...productFormData,
-          // Ensure price is a string when sending
-          // price: productFormData.price.toString(),
+          image: productFormData.image // This will be the Cloudinary URL
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save product');
+        throw new Error(errorData.error || 'Failed to save category');
       }
 
       const result = await response.json();
 
+      // Update the products list with the new/updated category
       if (isAddingProduct) {
         setProducts([...products, result]);
       } else {
@@ -224,20 +205,7 @@ export default function ProductsPage() {
       }
 
       // Reset form
-      setIsAddingProduct(false);
-      setEditingProduct(null);
-      setProductFormData({
-        title: '',
-        image: '',
-        // price: '',
-        // rating: 3,
-        // reviews: 0,
-        category: ''
-        // slug: '',
-        // description: '',
-        // specifications: []
-      });
-      setImagePreview(null);
+      handleCancel();
     } catch (err) {
       console.error('Submit error:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -439,10 +407,19 @@ export default function ProductsPage() {
                           src={imagePreview} 
                           alt="Preview" 
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Image failed to load:', imagePreview);
+                            (e.target as HTMLImageElement).src = '/placeholder-product.png';
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <FiUpload size={24} />
+                        </div>
+                      )}
+                      {isUploading && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
                         </div>
                       )}
                     </div>

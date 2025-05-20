@@ -449,11 +449,11 @@ export default function CategoryPage() {
                                     >
                                       <span className="flex items-center gap-2">
                                         {subcat.title}
-                                        <span className="text-sm text-gray-500">
+                                        {/* <span className="text-sm text-gray-500">
                                           ({filteredProducts.filter(p => 
                                             p.subCategory?.toLowerCase() === subcat.title.toLowerCase()
                                           ).length})
-                                        </span>
+                                        </span> */}
                                       </span>
                                     </div>
                                   </motion.li>
