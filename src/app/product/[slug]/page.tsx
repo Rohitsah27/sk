@@ -27,12 +27,13 @@ interface ProductDetailPageProps {
   params: { slug: string };
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default async function ProductDetailPage({ 
+  params 
+}: ProductDetailPageProps) {
   try {
-    const { slug } = params;
-    
-    // Normalize the slug
-    const normalizedSlug = decodeURIComponent(slug)
+    // Await the entire params object first
+    const resolvedParams = await params;
+    const normalizedSlug = decodeURIComponent(resolvedParams.slug)
       .toLowerCase()
       .replace(/-/g, ' ');
     
@@ -181,9 +182,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 }
 
-// Add error boundary
-export async function generateMetadata({ params }: ProductDetailPageProps) {
+export async function generateMetadata({ 
+  params 
+}: ProductDetailPageProps) {
+  // Await the entire params object
+  const resolvedParams = await params;
+  
   return {
-    title: `Product ${params.slug}`,
+    title: `Product ${resolvedParams.slug}`,
   };
 }
