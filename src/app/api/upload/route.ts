@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import cloudinary from '@/utils/cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure cloudinary directly in the route
+cloudinary.config({
+  cloud_name: 'rohitkrsah',
+  api_key: '225697353752836',
+  api_secret: '8qyNVb_MFlOqwYmlUeL4tvIe1m0',
+  secure: true
+});
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify Cloudinary configuration
+    // Verify cloudinary configuration
     if (!cloudinary.config().api_key) {
-      cloudinary.config({
-        cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-        secure: true
-      });
+      throw new Error('Cloudinary configuration is missing');
     }
 
     const formData = await request.formData();
@@ -28,29 +31,29 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64File = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-    // Log upload attempt
-    console.log('Attempting to upload file:', { 
-      type: file.type, 
-      size: buffer.length 
-    });
-
-    // Upload to Cloudinary with error handling
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload(base64File, {
-        folder: 'products',
-        resource_type: 'auto',
-      }, (error, result) => {
-        if (error) {
-          console.error('Cloudinary upload error:', error);
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-
-    // Log success
-    console.log('Upload successful:', result);
+    // Upload to Cloudinary with error handling and timeout
+    const result = await Promise.race([
+      new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(base64File, {
+          folder: 'products',
+          resource_type: 'auto',
+          timeout: 60000 // 60 seconds timeout
+        }, (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', {
+              message: error.message,
+              http_code: error.http_code
+            });
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        });
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Upload timeout')), 60000)
+      )
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -59,13 +62,21 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    // Log error details
-    console.error('Upload error details:', error);
+    // Enhanced error logging
+    console.error('Upload error details:', {
+      message: error.message,
+      name: error.name,
+      http_code: error.http_code,
+      stack: error.stack
+    });
     
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed',
-      details: error
+      details: {
+        name: error.name,
+        http_code: error.http_code
+      }
     }, { status: 500 });
   }
 }
