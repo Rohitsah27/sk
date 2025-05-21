@@ -1,45 +1,68 @@
-import { MongoClient } from 'mongodb';
 
-const uri = "mongodb+srv://rohitkrsah27:rohitpk27@categories.ef3m4kr.mongodb.net/productDb?retryWrites=true&w=majority&appName=categories";
-const client = new MongoClient(uri);
-const dbName = "productDb";
-const collectionName = "products";
+import { getDB } from '@/config/db';
+import { Product } from '@/types/product';
+import { ObjectId } from 'mongodb';
 
 export const ProductService = {
-  getAllProducts: async () => {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    const products = await collection.find().toArray();
-    return products;
+  async getAllProducts(): Promise<Product[]> {
+    const db = getDB();
+    return await db.collection('products').find({}).toArray() as Product[];
   },
 
-  createProduct: async (product: any) => {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    const result = await collection.insertOne(product);
-    return result.ops?.[0] || product;
+  async getProductBySlug(slug: string): Promise<Product | null> {
+    const db = getDB();
+    return await db.collection('products').findOne({ slug }) as Product;
   },
 
-  updateProduct: async (product: any) => {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    const { id, ...rest } = product;
-    const result = await collection.findOneAndUpdate(
-      { id },
-      { $set: rest },
+  async createProduct(productData: Partial<Product>): Promise<Product> {
+    const db = getDB();
+    
+    // Generate slug if not provided
+    if (!productData.slug) {
+      productData.slug = productData.title
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || '';
+    }
+
+    const result = await db.collection('products').insertOne(productData);
+    
+    if (!result.insertedId) {
+      throw new Error('Failed to insert product');
+    }
+
+    return await db.collection('products').findOne({ _id: result.insertedId }) as Product;
+  },
+
+  async updateProduct(productData: Partial<Product>): Promise<Product | null> {
+    const db = getDB();
+    
+    if (!productData._id) {
+      throw new Error('Product ID is required for update');
+    }
+
+    const { _id, ...updateData } = productData;
+    const objectId = new ObjectId(_id);
+
+    const result = await db.collection('products').findOneAndUpdate(
+      { _id: objectId },
+      { $set: updateData },
       { returnDocument: 'after' }
     );
-    return result.value;
+
+    return result as unknown as Product;
   },
 
-  deleteProduct: async (id: number) => {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    const result = await collection.deleteOne({ id });
+  async deleteProduct(id: string): Promise<boolean> {
+    const db = getDB();
+    
+    if (!id) {
+      throw new Error('Product ID is required for deletion');
+    }
+
+    const objectId = new ObjectId(id);
+    const result = await db.collection('products').deleteOne({ _id: objectId });
+    
     return result.deletedCount > 0;
   }
 };

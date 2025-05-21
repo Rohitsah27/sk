@@ -182,23 +182,25 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
 
   const handlePaste = async (e: React.ClipboardEvent) => {
     e.preventDefault();
-
-    // Handle text content
-    const text = e.clipboardData.getData('text/plain');
-    if (text) {
-      document.execCommand('insertText', false, text);
-      return;
-    }
-
-    // Handle image content
-    const items = Array.from(e.clipboardData.items);
-    const imageItem = items.find(item => item.type.startsWith('image'));
     
-    if (imageItem) {
-      const file = imageItem.getAsFile();
-      if (!file) return;
+    try {
+      // Handle text content
+      const text = e.clipboardData.getData('text/plain');
+      if (text) {
+        document.execCommand('insertText', false, text);
+        return;
+      }
 
-      try {
+      // Handle image content
+      const items = Array.from(e.clipboardData.items);
+      const imageItem = items.find(item => item.type.startsWith('image'));
+      
+      if (imageItem) {
+        const file = imageItem.getAsFile();
+        if (!file) return;
+
+        setIsUploading(true); // Show upload indicator
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -207,21 +209,34 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
           body: formData
         });
 
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
         const data: CloudinaryUploadResponse = await response.json();
 
         if (!data.success || !data.imageUrl) {
           throw new Error(data.error || 'Failed to upload image');
         }
 
+        // Insert image with loading animation
         document.execCommand('insertHTML', false, 
           `<img src="${data.imageUrl}" 
             alt="Pasted image" 
-            style="max-width:100%; height:auto;"
+            style="max-width:100%; height:auto; animation: fadeIn 0.3s;"
             data-public-id="${data.publicId}"/>`);
 
-      } catch (error) {
-        console.error('Paste upload error:', error);
+        // Notify parent of change
+        if (editorRef.current) {
+          onChange(editorRef.current.innerHTML);
+        }
       }
+    } catch (error) {
+      console.error('Paste upload error:', error);
+      // Show error to user
+      alert('Failed to paste image. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
