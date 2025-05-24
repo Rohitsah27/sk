@@ -1,7 +1,8 @@
 import React from 'react';
 import { Suspense } from 'react';
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+import { Star, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import Layout from '@/components/layout/Layout';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { getProductBySlug, fetchProducts, Product } from '@/data/products';
@@ -52,6 +53,14 @@ export default async function ProductDetailPage({
         <Suspense fallback={<ProductLoading />}>
           <section className="py-10">
             <div className="container-custom">
+              {/* Breadcrumbs */}
+              <Breadcrumbs 
+                items={[
+                  { label: 'Products', href: '/products' },
+                  { label: product.title }
+                ]} 
+              />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Product Images Section */}
                 <div className="relative">
@@ -191,4 +200,39 @@ export async function generateMetadata({
   return {
     title: `Product ${resolvedParams.slug}`,
   };
+}
+
+// Add Breadcrumbs component
+function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
+  return (
+    <nav className="flex mb-6" aria-label="Breadcrumb">
+      <ol className="flex items-center space-x-2">
+        <li>
+          <Link 
+            href="/" 
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            Home
+          </Link>
+        </li>
+        {items.map((item, index) => (
+          <li key={index} className="flex items-center">
+            <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
+            {item.href ? (
+              <Link 
+                href={item.href}
+                className="text-gray-500 hover:text-gray-700 text-sm"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-gray-900 text-sm font-medium">
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }

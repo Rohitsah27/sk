@@ -111,7 +111,7 @@ export default function RelatedProductsSection({
         </div>
 
         {/* Carousel Indicators */}
-        {products.length > slidesToShow && (
+        {/* {products.length > slidesToShow && (
           <div className="flex justify-center mt-6 gap-2">
             {Array.from({ length: totalSlides }).map((_, index) => (
               <button
@@ -124,7 +124,7 @@ export default function RelatedProductsSection({
               />
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </section>
   );

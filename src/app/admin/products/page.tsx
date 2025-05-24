@@ -98,7 +98,7 @@ export default function ProductsPage() {
           throw new Error(errorData.error || 'Failed to fetch sub-categories');
         }
         const data = await response.json();
-        console.log('Loaded subcategories:', data); // Debug log
+        // console.log('Loaded subcategories:', data); // Debug log
         setSubCategories(data);
       } catch (err) {
         console.error('Error loading subcategories:', err);
@@ -862,7 +862,7 @@ export default function ProductsPage() {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{product.title}</div>
+                      <div className="text-sm text-gray-900">{product.title}</div>
                       <div className="text-sm text-gray-500">{product.slug}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -875,7 +875,7 @@ export default function ProductsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <svg

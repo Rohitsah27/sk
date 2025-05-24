@@ -33,11 +33,57 @@ export default function FeaturedProducts({
 }: FeaturedProductsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
-
-  // Number of products per slide based on screen size
   const [slidesToShow, setSlidesToShow] = useState(5);
+
+  const productsToDisplay = propProducts || products.filter((product) => product.isFeatured);
+  const totalProducts = productsToDisplay.length;
+
+  const getVisibleProducts = () => {
+    if (!productsToDisplay || productsToDisplay.length === 0) {
+      return [];
+    }
+
+    const wrappedIndex = ((currentIndex % totalProducts) + totalProducts) % totalProducts;
+    const items = [];
+    
+    for (let i = 0; i < slidesToShow; i++) {
+      const index = (wrappedIndex + i) % totalProducts;
+      const product = productsToDisplay[index];
+      if (product) {
+        items.push(product);
+      }
+    }
+    
+    return items;
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % totalProducts);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => ((prev - 1 + totalProducts) % totalProducts));
+  };
+
+  // Update the auto-play effect
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (autoPlay && totalProducts > slidesToShow) {
+      intervalId = setInterval(() => {
+        nextSlide();
+      }, 3000); 
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [autoPlay, totalProducts, slidesToShow]);
 
   useEffect(() => {
     const updateSlidesToShow = () => {
@@ -74,20 +120,9 @@ export default function FeaturedProducts({
     }
   }, [propProducts]);
 
-  const productsToDisplay = propProducts || products.filter((product) => product.isFeatured);
-  const totalSlides = Math.ceil(productsToDisplay.length / slidesToShow);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
   const visibleProducts = productsToDisplay.slice(
-    currentSlide * slidesToShow,
-    (currentSlide + 1) * slidesToShow
+    currentIndex * slidesToShow,
+    (currentIndex + 1) * slidesToShow
   );
 
   return (
@@ -116,13 +151,18 @@ export default function FeaturedProducts({
             </>
           )}
 
-          <div ref={carouselRef} className="overflow-hidden">
+          <div 
+            ref={carouselRef} 
+            className="overflow-hidden"
+            onMouseEnter={() => setAutoPlay(false)}
+            onMouseLeave={() => setAutoPlay(true)}
+          >
             <AnimatePresence mode="wait">
               <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, x: currentSlide > 0 ? 100 : -100 }}
+                key={currentIndex}
+                initial={{ opacity: 0, x: currentIndex > 0 ? 100 : -100 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: currentSlide > 0 ? -100 : 100 }}
+                exit={{ opacity: 0, x: currentIndex > 0 ? -100 : 100 }}
                 transition={{ duration: 0.3 }}
                 className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6"
               >
@@ -131,25 +171,29 @@ export default function FeaturedProducts({
                     <SkeletonCard key={index} />
                   ))
                 ) : (
-                  visibleProducts.map((product) => (
-                    <motion.div
-                      key={product._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-2"
-                    >
-                      <ProductCard
-                        title={product.title}
-                        image={product.image}
-                        price={product.price}
-                        originalPrice={product.originalPrice}
-                        rating={product.rating}
-                        reviews={product.reviews}
-                        category={product.category}
-                        slug={product.slug}
-                      />
-                    </motion.div>
+                  getVisibleProducts().map((product, index) => (
+                    product && (  // Add this check
+                      <motion.div
+                        key={`${product._id || index}-${index}`}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="px-2"
+                      >
+                        <ProductCard
+                          id={product._id || ''}
+                          title={product.title || ''}
+                          image={product.image || ''}
+                          price={product.price || 0}
+                          originalPrice={product.originalPrice || 0}
+                          rating={product.rating || 0}
+                          reviews={product.reviews || 0}
+                          category={product.category || ''}
+                          slug={product.slug || ''}
+                        />
+                      </motion.div>
+                    )
                   ))
                 )}
               </motion.div>
@@ -158,20 +202,20 @@ export default function FeaturedProducts({
         </div>
 
         {/* Carousel Indicators */}
-        {productsToDisplay.length > slidesToShow && (
+        {/* {productsToDisplay.length > slidesToShow && (
           <div className="flex justify-center mt-6 gap-2">
-            {Array.from({ length: totalSlides }).map((_, index) => (
+            {Array.from({ length: totalProducts }).map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentSlide(index)}
+                onClick={() => setCurrentIndex(index)}
                 className={`w-3 h-3 rounded-full transition-colors ${
-                  currentSlide === index ? 'bg-primary' : 'bg-gray-300'
+                  currentIndex === index ? 'bg-primary' : 'bg-gray-300'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </section>
   );

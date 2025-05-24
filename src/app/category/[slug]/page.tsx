@@ -40,7 +40,7 @@ export default function CategoryPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
-  const productsPerPage = 12;
+  const productsPerPage = 9;
 
   // Loading states
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
@@ -389,7 +389,7 @@ export default function CategoryPage() {
                               href={`/category/${category.title.toLowerCase().replace(/\s+/g, '-')}`}
                               className={`block p-2 rounded flex-1 ${
                                 isActive 
-                                  ? 'bg-blue-50 text-blue-600 font-medium border border-blue-200' 
+                                  ? 'text-blue-600 font-medium ' 
                                   : 'hover:bg-gray-100'
                               }`}
                               onClick={(e) => {
@@ -414,7 +414,7 @@ export default function CategoryPage() {
                             {hasSubcategories && (
                               <button
                                 onClick={() => toggleCategoryExpansion(category.title)}
-                                className="p-2 rounded hover:bg-gray-100"
+                                className="p-2 rounded hover:bg-gray-100 "
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -440,9 +440,9 @@ export default function CategoryPage() {
                                     whileHover={{ x: 5 }}
                                   >
                                     <div
-                                      className={`block p-2 rounded cursor-pointer ${
+                                      className={`block p-2 rounded cursor-pointer text-sm bg-gray-50 mb-2 ${
                                         isSubcategorySelected(subcat.slug)
-                                          ? 'bg-blue-50 text-blue-500 border border-blue-50' 
+                                          ? 'text-blue-500 text-sm bg-gray-50' 
                                           : 'hover:bg-gray-100'
                                       }`}
                                       onClick={() => handleSubcategoryClick(subcat)}
@@ -642,8 +642,8 @@ export default function CategoryPage() {
 
               {/* Product Grid */}
               {loadingProducts || loadingSubcategories ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {Array.from({ length: 12 }).map((_, index) => (
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: 9 }).map((_, index) => (
                     <div key={index} className="bg-white rounded shadow overflow-hidden">
                       <Skeleton className="aspect-square w-full" />
                       <div className="p-4 space-y-2">
@@ -656,7 +656,7 @@ export default function CategoryPage() {
                 </div>
               ) : currentProducts.length > 0 ? (
                 <motion.div
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6"
                   layout
                 >
                   <AnimatePresence mode="wait">

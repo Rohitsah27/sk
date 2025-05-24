@@ -1,7 +1,5 @@
 // src/data/products.ts
 
-
-
 export interface Product {
   id: number;
   title: string;
@@ -17,8 +15,6 @@ export interface Product {
   isBestSelling?: boolean;
   isFeatured?: boolean;
 }
-
-
 
 
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -104,9 +100,9 @@ export const updateProduct = async (id: number, updatedProduct: Partial<Product>
 
 export const generateStaticParams = async () => {
   const products = await fetchProducts();
-  const categories = Array.from(new Set(products.map(product => product.category))); // Get unique categories
+  const categories = Array.from(new Set(products.map(product => product.category))); 
 
   return categories.map(category => ({
-    slug: category.toLowerCase().replace(/\s+/g, '-') // Slugify category name
+    slug: category.toLowerCase().replace(/\s+/g, '-') 
   }));
 };
