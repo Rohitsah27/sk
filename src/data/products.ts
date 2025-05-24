@@ -48,7 +48,7 @@ export async function getProductBySlug(slug: string) {
     // Use the same URL construction as fetchProducts
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : process.env.BASE_URL || 'http://localhost:3000';
+      : process.env.BASE_URL || 'https://sk-equipments.netlify.app/';
     
     const url = new URL('/api/products', baseUrl).toString();
     
