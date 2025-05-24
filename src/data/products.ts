@@ -50,9 +50,9 @@ export async function getProductBySlug(slug: string) {
       ? window.location.origin 
       : process.env.BASE_URL || 'http://localhost:3000';
     
-    const url = new URL('/api/products', baseUrl).toString();
-    
-    const response = await fetch(url, { 
+    // const url = new URL('/api/products', baseUrl).toString();
+
+    const response = await fetch(`${baseUrl}/api/products`, {
       cache: 'no-store',
       next: { revalidate: 0 }
     });
