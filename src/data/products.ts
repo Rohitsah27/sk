@@ -22,7 +22,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
     // Use absolute URL with proper fallback for server components
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : process.env.BASE_URL || 'http://localhost:3000';
+      : process.env.BASE_URL || 'https://sk-equipments.netlify.app/';
     
     const url = new URL('/api/products', baseUrl).toString();
     
