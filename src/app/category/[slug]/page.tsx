@@ -166,14 +166,17 @@ export default function CategoryPage() {
   const handleSubcategoryClick = (subcat: SubCategory) => {
     const newSubcategory = selectedSubcategory === subcat.slug ? null : subcat.slug;
     
-    // Update URL with subcategory
+    // Get the parent category slug in kebab case format
+    const parentCategorySlug = subcat.category.toLowerCase().replace(/\s+/g, '-');
+    
+    // Update URL with subcategory while maintaining parent category
     if (newSubcategory) {
       router.push(
-        `/category/${categorySlug}?subcategory=${newSubcategory}`,
+        `/category/${parentCategorySlug}?subcategory=${newSubcategory}`,
         { shallow: true }
       );
     } else {
-      router.push(`/category/${categorySlug}`, { shallow: true });
+      router.push(`/category/${parentCategorySlug}`, { shallow: true });
     }
     
     // Update state
