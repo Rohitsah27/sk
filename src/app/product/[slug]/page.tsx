@@ -14,35 +14,29 @@ import ProductImageGallery from '@/components/product/ProductImageGallery';
 
 // Add this before the ProductDetailPage component
 export async function generateStaticParams() {
-  try {
-    const products = await fetchProducts();
-    
-    return products.map((product) => ({
-      slug: product.slug || product.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-') // More thorough slug generation
-        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-    }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
+  const products = await fetchProducts();
+  
+  return products.map((product) => ({
+    slug: product.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+  }));
 }
 
 interface ProductDetailPageProps {
   params: { slug: string };
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default async function ProductDetailPage({ 
+  params 
+}: ProductDetailPageProps) {
   try {
-    if (!params?.slug) {
-      return notFound();
-    }
-
-    const normalizedSlug = decodeURIComponent(params.slug)
+    // Await the entire params object first
+    const resolvedParams = await params;
+    const normalizedSlug = decodeURIComponent(resolvedParams.slug)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/-/g, ' ');
     
     const product = await getProductBySlug(normalizedSlug);
 
@@ -193,7 +187,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     );
   } catch (error) {
     console.error('Error loading product:', error);
-    return notFound(); // Return 404 instead of throwing
+    throw new Error('Failed to load product details');
   }
 }
 
