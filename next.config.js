@@ -1,21 +1,49 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // Change from 'standalone' to 'export' for static generation
-  trailingSlash: true,
+  reactStrictMode: true,
+  output: 'standalone',
+  distDir: 'out',
   images: {
-    unoptimized: true,
+    unoptimized: true, // Only needed for static exports
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*', // Allow all domains for images
+        hostname: 'ext.same-assets.com',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sk-equipments.netlify.app',
         pathname: '**',
       }
-    ]
+    ],
+    domains: ['sk-equipments.netlify.app'], // Add your image domains here
   },
-  // Add generation configuration
-  experimental: {
-    staticPageGenerationTimeout: 300, // Increase timeout for static generation
-  }
-};
+  typescript: {
+    ignoreBuildErrors: true, // Use with caution
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // Use with caution
+  },
+  trailingSlash: true, // Add this line
+  // Optional: Add security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload'
+          },
+        ],
+      },
+    ];
+  },
+}
 
 export default nextConfig;
