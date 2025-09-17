@@ -352,7 +352,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                 className="bg-white p-4 rounded-lg shadow"
                 whileHover={{ scale: 1.02 }}
               >
-                <h2 className="text-lg font-semibold mb-4">Search</h2>
+                <h2 className="text-lg font-semibold mb-4">Searchs</h2>
 
                 <div className="relative w-full">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
