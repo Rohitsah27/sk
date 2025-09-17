@@ -70,7 +70,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
 
   // Add this helper function
   const isSubcategorySelected = (subcategorySlug: string) => {
-    return selectedSubcategory === subcategorySlug || 
+    return selectedSubcategory === subcategorySlug ||
       subcategoryParam === subcategorySlug;
   };
 
@@ -137,11 +137,11 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
       const categoryMatch = productCategoryNormalized === currentCategoryNormalized;
 
       // Match subcategory if selected
-      const subcategoryMatch = selectedSubcategory 
-        ? (product.subCategory && subcategories.some(subcat => 
-            subcat.slug === selectedSubcategory && 
-            subcat.title.toLowerCase() === product.subCategory!.toLowerCase()
-          ))
+      const subcategoryMatch = selectedSubcategory
+        ? (product.subCategory && subcategories.some(subcat =>
+          subcat.slug === selectedSubcategory &&
+          subcat.title.toLowerCase() === product.subCategory!.toLowerCase()
+        ))
         : true;
 
       // Other filters
@@ -312,7 +312,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
     <>
       <Header />
 
-      <motion.main 
+      <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -353,16 +353,49 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                 whileHover={{ scale: 1.02 }}
               >
                 <h2 className="text-lg font-semibold mb-4">Search</h2>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-full p-2 border rounded"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
+
+                <div className="relative w-full">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                    {/* Professional and Creative Search Icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M21 21l-5.2-5.2m0 0a7.5 7.5 0 10-10.6-10.6 7.5 7.5 0 0010.6 10.6z"
+                      />
+                      <circle
+                        cx="10.5"
+                        cy="10.5"
+                        r="6.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="transition-transform duration-200 group-hover:scale-110"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full pl-9 p-2 border rounded-md font-sans
+               placeholder:font-sans placeholder:text-gray-400 placeholder:text-[13px]
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+
+
               </motion.div>
 
               {/* Categories Filter */}
@@ -387,16 +420,15 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                       return (
                         <motion.li
                           key={category._id}
-                          className="space-y-1 border-b border-gray-200 last:border-b-0"
+                          className="space-y-1 text-[15px] font-sans border-b border-gray-200 last:border-b-0"
                         >
                           <div className="flex items-center justify-between">
                             <Link
                               href={`/category/${category.title.toLowerCase().replace(/\s+/g, '-')}`}
-                              className={`block p-2 rounded flex-1 ${
-                                isActive 
-                                  ? 'text-blue-600 font-medium ' 
-                                  : 'hover:bg-gray-100'
-                              }`}
+                              className={`block p-2 rounded flex-1 ${isActive
+                                ? 'text-blue-600 font-medium '
+                                : 'hover:bg-gray-100'
+                                }`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleCategoryClick(category.title.toLowerCase().replace(/\s+/g, '-'));
@@ -419,7 +451,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                             {hasSubcategories && (
                               <button
                                 onClick={() => toggleCategoryExpansion(category.title)}
-                                className="p-2 rounded hover:bg-gray-100 "
+                                className="p-2  rounded hover:bg-gray-100 "
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -445,11 +477,10 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                                     whileHover={{ x: 5 }}
                                   >
                                     <div
-                                      className={`block p-2 rounded cursor-pointer text-sm bg-gray-50 mb-2 ${
-                                        isSubcategorySelected(subcat.slug)
-                                          ? 'text-blue-500 text-sm bg-gray-50' 
-                                          : 'hover:bg-gray-100'
-                                      }`}
+                                      className={`block p-2 rounded cursor-pointer text-[12px] font-sans bg-gray-50 mb-2 ${isSubcategorySelected(subcat.slug)
+                                        ? 'text-blue-500  text-[12px] font-sans bg-gray-50'
+                                        : 'hover:bg-gray-100'
+                                        }`}
                                       onClick={() => handleSubcategoryClick(subcat)}
                                     >
                                       <span className="flex items-center gap-2">
@@ -501,7 +532,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                           className="group cursor-pointer"
                           whileHover={{ x: 5 }}
                         >
-                          <Link 
+                          <Link
                             href={`/product/${product.slug}`}
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
                           >
@@ -521,9 +552,8 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                                 {[...Array(5)].map((_, i) => (
                                   <svg
                                     key={i}
-                                    className={`w-3 h-3 ${
-                                      i < product.rating ? 'text-yellow-400' : 'text-gray-300'
-                                    }`}
+                                    className={`w-3 h-3 ${i < product.rating ? 'text-yellow-400' : 'text-gray-300'
+                                      }`}
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                   >
@@ -541,17 +571,17 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                   </div>
                 )}
 
-                {products.filter(product => 
+                {products.filter(product =>
                   product.category.toLowerCase() === categoryName.toLowerCase()
                 ).length > 3 && (
-                  <motion.button
-                    className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1"
-                    whileHover={{ x: 3 }}
-                  >
-                    View All Latest
-                    <ChevronRight className="w-4 h-4" />
-                  </motion.button>
-                )}
+                    <motion.button
+                      className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1"
+                      whileHover={{ x: 3 }}
+                    >
+                      View All Latest
+                      <ChevronRight className="w-4 h-4" />
+                    </motion.button>
+                  )}
               </motion.div>
 
               {/* Ratings Filter */}
@@ -653,7 +683,7 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
               {loadingProducts || loadingSubcategories ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {Array.from({ length: 9 }).map((_, index) => (
-                    <div key={index} className="bg-white rounded shadow overflow-hidden">
+                    <div key={index} className="bg-white rounded shadow overflow-hidden rounded">
                       <Skeleton className="aspect-square w-full" />
                       <div className="p-4 space-y-2">
                         <Skeleton className="h-4 w-3/4" />
@@ -698,8 +728,8 @@ function CategoryPageContent({ params }: { params: Promise<{ slug: string }> }) 
                             />
                           </div>
                           <div className="p-4">
-                            <h3 className="font-semibold  mb-1 text-center">{product.title}</h3>
-                            <div className="flex items-center mb-2">
+                            <h3 className="font-sans font-semibold mb-1 text-center ">{product.title}</h3>
+                            <div className="flex items-center justify-center mb-2">
                               {[...Array(5)].map((_, i) => (
                                 <svg
                                   key={i}
