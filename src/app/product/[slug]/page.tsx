@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic"; 
+export const revalidate = 3600; // revalidate every 1 hour
+
+
 import React from 'react';
 import { Suspense } from 'react';
 import Image from 'next/image';

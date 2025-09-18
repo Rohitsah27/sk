@@ -85,19 +85,23 @@ export const fetchProducts = async (): Promise<Product[]> => {
   }
 };
 
-
 export async function getProductBySlug(slug: string) {
   try {
     const normalizedSlug = slug.toLowerCase();
 
-    // Use the same URL construction as fetchProducts
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Clean up base URL (remove trailing slash if exists)
+    const baseUrl =
+      (typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.BASE_URL ||
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          "http://localhost:3000"
+      ).replace(/\/$/, ""); // 👈 remove trailing slash
 
-    const response = await fetch(`${baseUrl}/api/products?includeDescription=true`, {
-      cache: 'no-store'
-    });
+    const response = await fetch(
+      `${baseUrl}/api/products?includeDescription=true`, // 👈 always has single slash
+      { cache: "no-store" }
+    );
 
     if (!response.ok) {
       console.warn(`Failed to fetch products: ${response.status} ${response.statusText}`);
@@ -107,34 +111,27 @@ export async function getProductBySlug(slug: string) {
     const products = await response.json();
 
     if (!Array.isArray(products)) {
-      console.warn('Invalid products response');
+      console.warn("Invalid products response");
       return null;
     }
 
-    // Find product with multiple matching strategies - optimized
+    // Find product with multiple matching strategies
     const product = products.find((product: Product) => {
-      // Quick exact match first
-      if (product.slug && product.slug.toLowerCase() === normalizedSlug) {
-        return true;
-      }
-
-      // Then check generated slug
       const productSlug = (product.slug || product.title)
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 
-      if (productSlug === normalizedSlug) {
-        return true;
-      }
-
-      // Finally check title slug
       const titleSlug = product.title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 
-      return titleSlug === normalizedSlug;
+      return (
+        (product.slug && product.slug.toLowerCase() === normalizedSlug) ||
+        productSlug === normalizedSlug ||
+        titleSlug === normalizedSlug
+      );
     });
 
     if (!product) {
@@ -143,9 +140,8 @@ export async function getProductBySlug(slug: string) {
     }
 
     return product;
-
   } catch (error) {
-    console.warn('Error fetching product by slug:', error);
+    console.warn("Error fetching product by slug:", error);
     return null;
   }
 }
