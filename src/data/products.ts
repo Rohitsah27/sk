@@ -52,7 +52,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
     // Use dynamic base URL for runtime
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : process.env.BASE_URL || 'http://localhost:3000';
+      : process.env.BASE_URL || 'https://sk-three-delta.vercel.app';
 
     const res = await fetch(`${baseUrl}/api/products?includeDescription=true`);
 
@@ -95,7 +95,7 @@ export async function getProductBySlug(slug: string) {
         ? window.location.origin
         : process.env.BASE_URL ||
           process.env.NEXT_PUBLIC_BASE_URL ||
-          "http://localhost:3000"
+          "https://sk-three-delta.vercel.app/"
       ).replace(/\/$/, ""); // 👈 remove trailing slash
 
     const response = await fetch(
