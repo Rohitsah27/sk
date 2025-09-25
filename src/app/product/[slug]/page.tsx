@@ -1,58 +1,36 @@
 export const dynamic = "force-dynamic"; 
 export const revalidate = 3600; // revalidate every 1 hour
 
-import React, { Suspense } from 'react';
+
+import React from 'react';
+import { Suspense } from 'react';
 import Image from 'next/image';
 import { Star, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Layout from '@/components/layout/Layout';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import { getProductBySlug, fetchProducts, Product } from '@/data/products';
 import { notFound } from 'next/navigation';
 import ReletedProductsSection from '@/components/sections/ReletedProductsSection';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import ProductLoading from './loading';
 
-// Direct database fetch functions
-import { getDB } from '@/config/db';
-
-// Generate static params for dynamic routes
+// Add this before the ProductDetailPage component
 export async function generateStaticParams() {
   try {
+    // Use direct database access during build
+    const { getDB } = await import('@/config/db');
     const db = getDB();
-    const products = await db.collection('products').find({}, { projection: { slug: 1 } }).toArray();
+    const products = await db.collection('products').find({}, { projection: { slug: 1, title: 1 } }).toArray();
 
     return products.map((product) => ({
-      slug: (product.slug || '')
+      slug: (product.slug || product.title)
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replace(/[^a-z0-9]+/g, '-') // More thorough slug generation
+        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
     }));
   } catch (error) {
     console.error('Error generating static params:', error);
-    return [];
-  }
-}
-
-// Fetch single product by slug
-async function getProductBySlug(slug: string) {
-  try {
-    const db = getDB();
-    const product = await db.collection('products').findOne({ slug });
-    return product;
-  } catch (error) {
-    console.error('Error fetching product by slug:', error);
-    return null;
-  }
-}
-
-// Fetch all products (for related products)
-async function fetchProducts() {
-  try {
-    const db = getDB();
-    const products = await db.collection('products').find({}).toArray();
-    return products;
-  } catch (error) {
-    console.error('Error fetching products:', error);
     return [];
   }
 }
@@ -61,6 +39,7 @@ interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Main product content component
 async function ProductContent({ slug }: { slug: string }) {
   try {
     const normalizedSlug = decodeURIComponent(slug)
@@ -69,12 +48,30 @@ async function ProductContent({ slug }: { slug: string }) {
       .replace(/^-|-$/g, '');
 
     const product = await getProductBySlug(normalizedSlug);
-    if (!product) return notFound();
+
+    if (!product) {
+      return notFound();
+    }
+
+    // Debug product data in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Product page data:', {
+        title: product.title,
+        hasDescription: !!product.description,
+        descriptionLength: product.description?.length || 0,
+        hasSpecifications: !!product.specifications && product.specifications.length > 0,
+        specificationsCount: product.specifications?.length || 0,
+        hasAdditionalImages: !!product.additionalImages && product.additionalImages.length > 0,
+        additionalImagesCount: product.additionalImages?.length || 0,
+        allKeys: Object.keys(product)
+      });
+    }
 
     return (
       <>
         <section className="py-10">
           <div className="container-custom">
+            {/* Breadcrumbs */}
             <Breadcrumbs 
               items={[
                 { label: 'Products', href: '/products' },
@@ -83,16 +80,18 @@ async function ProductContent({ slug }: { slug: string }) {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Product Images Section */}
               <div className="relative">
                 <ProductImageGallery 
                   images={[product.image, ...(product.additionalImages || [])]} 
                   title={product.title}
                 />
               </div>
-
+              {/* Product Info - Scrollable Content */}
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{product.title}</h1>
 
+                {/* Ratings */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex">
                     {Array(5).fill(0).map((_, i) => (
@@ -106,11 +105,21 @@ async function ProductContent({ slug }: { slug: string }) {
                   <span className="text-sm text-gray-500">({product.reviews} Reviews)</span>
                 </div>
 
+                {/* Description */}
                 {product.description ? (
                   <div className="mb-6">
                     <h3 className="font-medium mb-2">Description:</h3>
                     <div 
-                      className="prose max-w-none text-gray-600"
+                      className="prose max-w-none text-gray-600 
+                        [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:text-gray-900
+                        [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:text-gray-800
+                        [&>h3]:text-xl [&>h3]:font-medium [&>h3]:mb-3 [&>h3]:text-gray-800
+                        [&>h4]:text-lg [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:text-gray-700
+                        [&>h5]:text-base [&>h5]:font-medium [&>h5]:mb-2 [&>h5]:text-gray-700
+                        [&>h6]:text-sm [&>h6]:font-medium [&>h6]:mb-2 [&>h6]:text-gray-600
+                        [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4
+                        [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-4
+                        [&>p]:mb-4 [&>p]:leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: product.description }}
                     />
                   </div>
@@ -121,24 +130,28 @@ async function ProductContent({ slug }: { slug: string }) {
                   </div>
                 )}
 
+                {/* Specifications */}
                 {(product?.specifications ?? []).length > 0 && (
                   <div className="border-t border-b py-4 mb-6">
                     <h3 className="font-medium mb-2">Specifications:</h3>
                     <ul className="space-y-1">
-                      {product.specifications.map((spec: string, idx: number) => (
+                      {(product?.specifications ?? []).map((spec: string, idx: number) => (
                         <li key={idx} className="text-gray-600">• {spec}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
+                {/* WhatsApp Button */}
                 <div className="flex items-center mb-6">
                   <WhatsAppButton product={{ ...product, price: Number(product.price) }} />
                 </div>
 
+                {/* Category and Tags */}
                 <div className="space-y-2 text-sm text-gray-500">
                   <p>
-                    Category: <span className="text-[hsl(var(--bonik-pink))]">{product.category}</span>
+                    Category:{" "}
+                    <span className="text-[hsl(var(--bonik-pink))]">{product.category}</span>
                   </p>
                 </div>
               </div>
@@ -146,7 +159,8 @@ async function ProductContent({ slug }: { slug: string }) {
           </div>
         </section>
 
-        <Suspense fallback={<div className="py-10"><div className="container-custom text-center">Loading related products...</div></div>}>
+        {/* Related Products - Load separately to avoid blocking main content */}
+        <Suspense fallback={<div className="py-10"><div className="container-custom"><div className="text-center">Loading related products...</div></div></div>}>
           <RelatedProductsWrapper productId={product._id} />
         </Suspense>
       </>
@@ -157,13 +171,17 @@ async function ProductContent({ slug }: { slug: string }) {
   }
 }
 
+// Separate component for related products to avoid blocking main content
 async function RelatedProductsWrapper({ productId }: { productId: string }) {
   try {
     const relatedProducts = await fetchProducts();
+
     return (
       <ReletedProductsSection
         title="You Might Also Like"
-        products={relatedProducts.filter((p) => p._id !== productId).slice(0, 50)}
+        products={relatedProducts
+          .filter((p: Product) => p._id !== productId)
+          .slice(0, 50)}
       />
     );
   } catch (error) {
@@ -174,7 +192,10 @@ async function RelatedProductsWrapper({ productId }: { productId: string }) {
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const resolvedParams = await params;
-  if (!resolvedParams?.slug) return notFound();
+
+  if (!resolvedParams?.slug) {
+    return notFound();
+  }
 
   return (
     <Layout>
@@ -185,27 +206,43 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   );
 }
 
-export async function generateMetadata({ params }: ProductDetailPageProps) {
+export async function generateMetadata({ 
+  params 
+}: ProductDetailPageProps) {
   const resolvedParams = await params;
+
   return {
     title: `Product ${resolvedParams.slug}`,
   };
 }
 
+// Add Breadcrumbs component
 function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">
       <ol className="flex items-center space-x-2">
         <li>
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">Home</Link>
+          <Link 
+            href="/" 
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            Home
+          </Link>
         </li>
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
             <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
             {item.href ? (
-              <Link href={item.href} className="text-gray-500 hover:text-gray-700 text-sm">{item.label}</Link>
+              <Link 
+                href={item.href}
+                className="text-gray-500 hover:text-gray-700 text-sm"
+              >
+                {item.label}
+              </Link>
             ) : (
-              <span className="text-gray-900 text-sm font-medium">{item.label}</span>
+              <span className="text-gray-900 text-sm font-medium">
+                {item.label}
+              </span>
             )}
           </li>
         ))}
@@ -213,3 +250,4 @@ function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
     </nav>
   );
 }
+
